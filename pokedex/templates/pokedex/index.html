@@ -1,12 +1,80 @@
 {% extends 'pokedex/base.html' %} {% block content %}
-<div class="text-center mt-10">
-  <h2 class="text-3xl font-bold mb-4">Bienvenue sur le Pokedex</h2>
-  <p class="text-gray-600">Recherche tes Pokémons préférés !</p>
+<div class="container mx-auto py-10 px-4">
+  <div class="max-w-2xl mx-auto mb-16 relative">
+    <div
+      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+    >
+      <svg
+        class="h-6 w-6 text-gray-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
+      </svg>
+    </div>
+    <input
+      type="text"
+      placeholder="Rechercher un Pokémon par nom ou ID..."
+      class="block w-full pl-12 pr-4 py-4 rounded-full border-none shadow-lg ring-1 ring-gray-200 focus:ring-4 focus:ring-red-300 transition text-lg text-gray-700 placeholder-gray-400"
+    />
+  </div>
 
-  <button
-    class="bg-blue-500 text-white px-4 py-2 rounded mt-6 hover:bg-blue-700 transition"
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
   >
-    Lancer une recherche
-  </button>
+    {% for pokemon in pokemons %}
+    <div
+      class="group relative bg-white rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer overflow-visible mt-12 border border-slate-100"
+    >
+      <div
+        class="absolute -top-12 left-1/2 transform -translate-x-1/2 w-28 h-28 rounded-full bg-{{ pokemon.color }}-100 group-hover:bg-{{ pokemon.color }}-200 transition-colors duration-300 shadow-inner z-0 flex items-center justify-center"
+      >
+        <div
+          class="w-20 h-20 rounded-full bg-{{ pokemon.color }}-300 opacity-30"
+        ></div>
+      </div>
+
+      <div class="relative z-10 flex justify-center -mt-16 mb-4">
+        <img
+          src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ pokemon.id }}.png"
+          alt="{{ pokemon.name }}"
+          class="w-40 h-40 object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300"
+        />
+      </div>
+
+      <div class="text-center px-6 pb-6 pt-2">
+        <span class="block text-gray-400 font-bold text-sm tracking-widest mb-1"
+          >N°{{ pokemon.id }}</span
+        >
+
+        <h3
+          class="text-2xl font-black text-slate-800 capitalize mb-2 group-hover:text-{{ pokemon.color }}-600 transition-colors"
+        >
+          {{ pokemon.name }}
+        </h3>
+
+        <span
+          class="inline-block bg-{{ pokemon.color }}-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-md mb-4"
+        >
+          {{ pokemon.type }}
+        </span>
+
+        <p class="text-slate-500 text-sm italic leading-relaxed">
+          {{ pokemon.desc }}
+        </p>
+      </div>
+
+      <div
+        class="absolute bottom-0 left-0 w-full h-1 bg-{{ pokemon.color }}-500 rounded-b-[2rem] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+      ></div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

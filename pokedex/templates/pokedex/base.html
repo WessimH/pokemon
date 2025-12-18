@@ -7,12 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-slate-100 text-slate-800">
-    <nav class="bg-red-600 text-white p-4 shadow-lg">
+    <nav
+      class="bg-red-600 border-b-8 border-red-800 text-white p-4 shadow-xl sticky top-0 z-50"
+    >
       <div class="container mx-auto flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Pokedex Arena</h1>
-        <div>
-          <a href="#" class="px-4 hover:text-yellow-300">Accueil</a>
-          <a href="#" class="px-4 hover:text-yellow-300">Mes Équipes</a>
+        <div class="flex items-center gap-4">
+          <div
+            class="w-10 h-10 rounded-full bg-blue-400 border-4 border-white shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse"
+          ></div>
+          <h1
+            class="text-3xl font-extrabold tracking-wider uppercase font-sans italic"
+          >
+            Pokedex
+          </h1>
+        </div>
+
+        <div class="flex gap-6 font-bold text-sm md:text-base">
+          <a href="#" class="relative group py-1">
+            <span>Accueil</span>
+            <span
+              class="absolute bottom-0 left-0 w-0 h-1 bg-yellow-300 transition-all group-hover:w-full"
+            ></span>
+          </a>
+          <a href="#" class="relative group py-1">
+            <span>Mes Équipes</span>
+            <span
+              class="absolute bottom-0 left-0 w-0 h-1 bg-yellow-300 transition-all group-hover:w-full"
+            ></span>
+          </a>
         </div>
       </div>
     </nav>
