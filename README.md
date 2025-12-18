@@ -79,6 +79,11 @@ This project uses [Ruff](https://docs.astral.sh/ruff/) for linting and formattin
 poetry run ruff check .
 ```
 
+**Run linter and auto-fix:**
+```bash
+poetry run ruff check --fix .
+```
+
 **Run formatter:**
 ```bash
 poetry run ruff format .
