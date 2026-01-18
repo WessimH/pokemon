@@ -1,8 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta
+      name="description"
+      content="Pokedex application built with Django and Tailwind CSS"
+    />
     <title>Pokemon Battle</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
@@ -18,19 +23,19 @@
           <h1
             class="text-3xl font-extrabold tracking-wider uppercase font-sans italic"
           >
-            Pokedex
+            <a href="{% url 'index' %}"> Pokedex </a>
           </h1>
         </div>
 
         <div class="flex gap-6 font-bold text-sm md:text-base">
-          <a href="#" class="relative group py-1">
-            <span>Accueil</span>
+          <a href="{% url 'team' %}" class="relative group py-1">
+            <span>Mes Équipes</span>
             <span
               class="absolute bottom-0 left-0 w-0 h-1 bg-yellow-300 transition-all group-hover:w-full"
             ></span>
           </a>
-          <a href="#" class="relative group py-1">
-            <span>Mes Équipes</span>
+          <a href="{% url 'fight' %}" class="relative group py-1">
+            <span>Combats</span>
             <span
               class="absolute bottom-0 left-0 w-0 h-1 bg-yellow-300 transition-all group-hover:w-full"
             ></span>

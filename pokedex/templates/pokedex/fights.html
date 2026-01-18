@@ -1,0 +1,46 @@
+{% extends 'pokedex/base.html' %} {% block content %}
+<div class="container mx-auto py-10 px-4">
+  <div class="text-center mb-12">
+    <h2 class="text-4xl font-extrabold text-slate-800 tracking-tight">
+      Arène de Combat
+    </h2>
+    <p class="text-red-500 font-bold mt-2 uppercase tracking-widest">
+      Zone de danger
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+    <div
+      class="bg-gradient-to-b from-blue-500 to-blue-700 rounded-2xl p-6 text-white shadow-2xl relative overflow-hidden group hover:scale-105 transition cursor-pointer"
+    >
+      <div
+        class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white opacity-10 rounded-full"
+      ></div>
+      <h3 class="text-2xl font-bold mb-4">Solo vs IA</h3>
+      <p class="opacity-90 mb-6">
+        Entraîne-toi contre l'ordinateur pour tester tes stratégies.
+      </p>
+      <span
+        class="inline-block bg-white text-blue-700 font-bold px-4 py-2 rounded-lg text-sm"
+        >Combattre</span
+      >
+    </div>
+
+    <div
+      class="bg-gradient-to-b from-red-500 to-red-700 rounded-2xl p-6 text-white shadow-2xl relative overflow-hidden group hover:scale-105 transition cursor-pointer"
+    >
+      <div
+        class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white opacity-10 rounded-full"
+      ></div>
+      <h3 class="text-2xl font-bold mb-4">Duel (Multijoueur)</h3>
+      <p class="opacity-90 mb-6">
+        Affronte un autre dresseur en temps réel (Bientôt disponible).
+      </p>
+      <span
+        class="inline-block bg-white text-red-700 font-bold px-4 py-2 rounded-lg text-sm"
+        >Rechercher</span
+      >
+    </div>
+  </div>
+</div>
+{% endblock %}

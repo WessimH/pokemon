@@ -1,28 +1,38 @@
 {% extends 'pokedex/base.html' %} {% block content %}
 <div class="container mx-auto py-10 px-4">
   <div class="max-w-2xl mx-auto mb-16 relative">
-    <div
-      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-    >
-      <svg
-        class="h-6 w-6 text-gray-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
+    <form method="GET" action="{% url 'index' %}">
+      <div
+        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
-    </div>
-    <input
-      type="text"
-      placeholder="Rechercher un Pokémon par nom ou ID..."
-      class="block w-full pl-12 pr-4 py-4 rounded-full border-none shadow-lg ring-1 ring-gray-200 focus:ring-4 focus:ring-red-300 transition text-lg text-gray-700 placeholder-gray-400"
-    />
+        <svg
+          class="h-6 w-6 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+      <input
+        type="text"
+        name="q"
+        value="{{ query|default:'' }}"
+        placeholder="Rechercher un Pokémon (ex: pikachu)..."
+        class="block w-full pl-12 pr-4 py-4 rounded-full border-none shadow-lg ring-1 ring-gray-200 focus:ring-4 focus:ring-red-300 transition text-lg text-gray-700 placeholder-gray-400"
+      />
+      <button
+        type="submit"
+        class="absolute right-2 top-2 bottom-2 bg-red-600 text-white px-6 rounded-full hover:bg-red-700 transition"
+      >
+        Go
+      </button>
+    </form>
   </div>
 
   <div
@@ -30,7 +40,7 @@
   >
     {% for pokemon in pokemons %}
     <div
-      class="group relative bg-white rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer overflow-visible mt-12 border border-slate-100"
+      class="group relative bg-white rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer overflow-visible mt-12 border border-slate-100 flex flex-col"
     >
       <div
         class="absolute -top-12 left-1/2 transform -translate-x-1/2 w-28 h-28 rounded-full bg-{{ pokemon.color }}-100 group-hover:bg-{{ pokemon.color }}-200 transition-colors duration-300 shadow-inner z-0 flex items-center justify-center"
@@ -48,7 +58,7 @@
         />
       </div>
 
-      <div class="text-center px-6 pb-6 pt-2">
+      <div class="text-center px-6 pb-6 pt-2 flex-grow">
         <span class="block text-gray-400 font-bold text-sm tracking-widest mb-1"
           >N°{{ pokemon.id }}</span
         >
@@ -65,9 +75,43 @@
           {{ pokemon.type }}
         </span>
 
-        <p class="text-slate-500 text-sm italic leading-relaxed">
+        <p class="text-slate-500 text-sm italic leading-relaxed mb-6">
           {{ pokemon.desc }}
         </p>
+
+        <div class="space-y-3 mt-auto">
+          <a
+            href="{% url 'pokemon_detail' pokemon.id %}"
+            class="block w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold transition"
+          >
+            Voir détails
+          </a>
+
+          <form method="POST" action="#">
+            {% csrf_token %}
+            <input type="hidden" name="pokemon_id" value="{{ pokemon.id }}" />
+            <input
+              type="hidden"
+              name="pokemon_name"
+              value="{{ pokemon.name }}"
+            />
+
+            <button
+              type="button"
+              class="w-full border-2 border-slate-200 text-slate-600 hover:border-red-500 hover:text-red-500 py-2 rounded-lg transition text-sm font-bold flex items-center justify-center gap-2 group-hover:bg-white"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8z"
+                />
+                <path
+                  d="M12 6a6 6 0 1 0 6 6 6.006 6.006 0 0 0-6-6zm0 10a4 4 0 1 1 4-4 4.004 4.004 0 0 1-4 4z"
+                />
+              </svg>
+              Capturer
+            </button>
+          </form>
+        </div>
       </div>
 
       <div
