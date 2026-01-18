@@ -1,6 +1,9 @@
 import random
 from django.shortcuts import render
 import requests 
+from django.contrib.auth.forms import UserCreationForm
+from django.urls import reverse_lazy
+from django.views import generic
 
 # Dictionnaire pour la traduction des type et couleurs associées 
 TYPE_TRANSLATIONS = {
@@ -106,7 +109,7 @@ FRENCH_TO_ENGLISH = {
 
 # --- VUE PRINCIPALE : LISTE DES POKÉMONS ---
 def index(request):
-    # On charge la liste "légère" des 151 (juste noms + urls)
+    # Chargement de la liste "légère" des 151 (juste noms + urls)
     url = 'https://pokeapi.co/api/v2/pokemon?limit=151'
     pokemons_to_display = []
     
@@ -229,3 +232,8 @@ def team(request):
 
 def fight(request):
     return render(request, 'pokedex/fights.html')
+
+class SignUpView(generic.CreateView):
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login') # Redirection connexion
+    template_name = 'registration/signup.html'

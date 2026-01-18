@@ -116,3 +116,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Redirection après connexion réussie (le 'name' de ta route index)
+LOGIN_REDIRECT_URL = 'index'
+# Redirection après déconnexion
+LOGOUT_REDIRECT_URL = 'index'
