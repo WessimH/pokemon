@@ -53,7 +53,7 @@
         <div class="flex items-center gap-4">
           {% if user.is_authenticated %}
           <a
-            href="#"
+            href="{% url 'profile' %}"
             class="flex items-center gap-2 bg-red-700 hover:bg-red-800 py-1 px-3 rounded-full transition border border-red-500"
           >
             <div class="bg-white rounded-full p-1">

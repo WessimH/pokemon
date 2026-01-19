@@ -1,5 +1,5 @@
 import random
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 import requests 
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
@@ -235,12 +235,7 @@ def pokemon_detail(request, pokemon_id):
         
     return render(request, 'pokedex/pokemon.html', context)
 
-def team(request):
-    return render(request, 'pokedex/teams.html')
-
-def fight(request):
-    return render(request, 'pokedex/fights.html')
-
+# --- VUE INSCRIPTION UTILISATEUR ---
 class SignUpView(generic.CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login') # Redirection connexion
@@ -248,6 +243,7 @@ class SignUpView(generic.CreateView):
 
 @login_required
 def capture_pokemon(request):
+    #Post de la capture d'un pokémon 
     if request.method == 'POST':
         pokemon_id = request.POST.get('pokemon_id')
         raw_name = request.POST.get('pokemon_name')
@@ -262,3 +258,26 @@ def capture_pokemon(request):
         )
         
     return redirect(request.META.get('HTTP_REFERER', 'index'))
+
+@login_required
+def profile(request):
+    # Recupération des captures de l'utilisateur connecté
+    captures = PokemonCapture.objects.filter(user=request.user).order_by('-captured_at')
+    
+    return render(request, 'pokedex/profile.html', {'captures': captures})
+
+@login_required
+def release_pokemon(request, pokemon_id):
+    # On cherche le pokémon correspondant à l'ID ET à l'utilisateur connecté pour le supprimer
+    pokemon = get_object_or_404(PokemonCapture, id=pokemon_id, user=request.user)
+    
+    pokemon.delete()
+    
+    return redirect('profile')
+
+
+def team(request):
+    return render(request, 'pokedex/teams.html')
+
+def fight(request):
+    return render(request, 'pokedex/fights.html')
