@@ -140,13 +140,13 @@ def index(request):
                     if search_term in item['name'] or query == p_id:
                         filtered_list.append(item)
                 
-                # 12 premier resultats max pour eviter surcharge 
-                filtered_list = filtered_list[:12]
+                # 6 premier resultats max 
+                filtered_list = filtered_list[:6]
             
             else:
                 # --- LOGIQUE HASARD (Index normal) ---
-                # 6 pokémons aléatoires
-                filtered_list = random.sample(all_results, 6)
+                # 4 pokémons aléatoires
+                filtered_list = random.sample(all_results, 4)
 
             # --- ENRICHISSEMENT (On récupère les types/couleurs) ---
             for item in filtered_list:
@@ -264,19 +264,47 @@ def capture_pokemon(request):
 # --- VUE DETAIL D'UN POKÉMON CAPTURÉ (PAGE PROFILE) ---
 @login_required
 def capture_detail(request, capture_id):
-    # On récupère LA capture précise 
     capture = get_object_or_404(PokemonCapture, id=capture_id, user=request.user)
     
-    # On demande à l'API les stats de base de cette espèce
+    # --- 1. GESTION DU RENOMMAGE (POST) ---
+    if request.method == 'POST':
+        new_nickname = request.POST.get('nickname')
+        if new_nickname:
+            capture.nickname = new_nickname
+            capture.save()
+            # On recharge la page pour voir le changement
+            return redirect('capture_detail', capture_id=capture.id)
+
+    # --- 2. RÉCUPERATION DES DONNÉES API ---
     url = f"https://pokeapi.co/api/v2/pokemon/{capture.pokemon_id}"
     response = requests.get(url)
     
     stats_display = []
-    
+    height_m = 0
+    weight_kg = 0
+    description = "Pas de description disponible."
+
     if response.status_code == 200:
         data = response.json()
         
-        # Mapping pour traduire les stats en FR et mettre des couleurs
+        # Récupération Taille/Poids (API en décimètres/hectogrammes -> conversion M/KG)
+        height_m = data['height'] / 10
+        weight_kg = data['weight'] / 10
+
+        # --- 3. RÉCUPERATION DE LA DESCRIPTION (Second appel API) ---
+        # L'URL de l'espèce est donnée dans la première réponse
+        species_url = data['species']['url']
+        species_response = requests.get(species_url)
+        
+        if species_response.status_code == 200:
+            species_data = species_response.json()
+            # On cherche la première description en Français
+            for entry in species_data['flavor_text_entries']:
+                if entry['language']['name'] == 'fr':
+                    description = entry['flavor_text'].replace("\n", " ") # Nettoyage du texte
+                    break
+
+        # --- 4. CALCUL DES STATS (Inchangé) ---
         stat_translations = {
             'hp': ('PV', 'bg-green-500'),
             'attack': ('Attaque', 'bg-red-500'),
@@ -286,34 +314,32 @@ def capture_detail(request, capture_id):
             'speed': ('Vitesse', 'bg-yellow-400'),
         }
 
-        # La Boucle de Calcul
         for s in data['stats']:
             name_en = s['stat']['name']
             base_stat = s['base_stat']
             
-            # Formule simplifiée de Pokémon (Base * 2 * Niveau / 100 + 5)
-            # Pour les PV, la formule est un peu différente dans le vrai jeu, mais restons simples
             if name_en == 'hp':
                 real_value = int((base_stat * 2 * capture.level) / 100 + capture.level + 10)
             else:
                 real_value = int((base_stat * 2 * capture.level) / 100 + 5)
                 
             name_fr, color = stat_translations.get(name_en, (name_en, 'bg-gray-500'))
-            
-            # On prépare une barre de progression (max 300 pour l'affichage)
             percent = min((real_value / 300) * 100, 100)
 
             stats_display.append({
                 'name': name_fr,
                 'value': real_value,
-                'base': base_stat, # On garde la stat de base pour info
+                'base': base_stat,
                 'color': color,
                 'percent': percent
             })
 
     return render(request, 'pokedex/capture_detail.html', {
         'pokemon': capture,
-        'stats': stats_display
+        'stats': stats_display,
+        'height': height_m,
+        'weight': weight_kg,
+        'description': description
     })
 
 # --- VUE PROFIL UTILISATEUR (PAGE PROFILE) ---
