@@ -1,9 +1,11 @@
 import random
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import requests 
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
 from django.views import generic
+from django.contrib.auth.decorators import login_required
+from .models import PokemonCapture
 
 # Dictionnaire pour la traduction des type et couleurs associées 
 TYPE_TRANSLATIONS = {
@@ -107,6 +109,9 @@ FRENCH_TO_ENGLISH = {
     'mew': 'mew'
 }
 
+# On inverse le dictionnaire : { 'bulbasaur': 'bulbizarre', ... }
+ENGLISH_TO_FRENCH = {v: k for k, v in FRENCH_TO_ENGLISH.items()}
+
 # --- VUE PRINCIPALE : LISTE DES POKÉMONS ---
 def index(request):
     # Chargement de la liste "légère" des 151 (juste noms + urls)
@@ -154,9 +159,12 @@ def index(request):
                         
                         type_fr, color = TYPE_TRANSLATIONS.get(type_en, (type_en, 'gray'))
                         
+                        name_en = item['name']
+                        name_fr = ENGLISH_TO_FRENCH.get(name_en, name_en).capitalize()
+                        
                         pokemons_to_display.append({
                             'id': poke_id,
-                            'name': item['name'],
+                            'name': name_fr,
                             'color': color,
                             'type': type_fr,
                         })
@@ -237,3 +245,20 @@ class SignUpView(generic.CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login') # Redirection connexion
     template_name = 'registration/signup.html'
+
+@login_required
+def capture_pokemon(request):
+    if request.method == 'POST':
+        pokemon_id = request.POST.get('pokemon_id')
+        raw_name = request.POST.get('pokemon_name')
+        
+        clean_name = raw_name.capitalize() if raw_name else "Inconnu"
+
+        PokemonCapture.objects.create(
+            user=request.user,
+            pokemon_id=pokemon_id,
+            name=clean_name, 
+            nickname=clean_name 
+        )
+        
+    return redirect(request.META.get('HTTP_REFERER', 'index'))

@@ -87,7 +87,7 @@
             Voir détails
           </a>
 
-          <form method="POST" action="#">
+          <form method="POST" action="{% url 'capture_pokemon' %}">
             {% csrf_token %}
             <input type="hidden" name="pokemon_id" value="{{ pokemon.id }}" />
             <input
@@ -97,7 +97,7 @@
             />
 
             <button
-              type="button"
+              type="submit"
               class="w-full border-2 border-slate-200 text-slate-600 hover:border-red-500 hover:text-red-500 py-2 rounded-lg transition text-sm font-bold flex items-center justify-center gap-2 group-hover:bg-white"
             >
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

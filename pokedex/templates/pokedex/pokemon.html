@@ -83,11 +83,16 @@
       </div>
 
       <div class="mt-8 pt-6 border-t">
-        <button
-          class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition shadow-lg"
-        >
-          Ajouter à mon équipe
-        </button>
+        <form method="POST" action="{% url 'capture_pokemon' %}">
+          {% csrf_token %}
+          <input type="hidden" name="pokemon_id" value="{{ pokemon.id }}" />
+          <input type="hidden" name="pokemon_name" value="{{ pokemon.name }}" />
+          <button
+            class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition shadow-lg"
+          >
+            Ajouter à mon équipe
+          </button>
+        </form>
       </div>
     </div>
   </div>
