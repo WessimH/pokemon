@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.contrib.auth.decorators import login_required
 from .models import PokemonCapture
+from .forms import ProfileEditForm
 
 # Dictionnaire pour la traduction des type et couleurs associées 
 TYPE_TRANSLATIONS = {
@@ -112,7 +113,7 @@ FRENCH_TO_ENGLISH = {
 # On inverse le dictionnaire : { 'bulbasaur': 'bulbizarre', ... }
 ENGLISH_TO_FRENCH = {v: k for k, v in FRENCH_TO_ENGLISH.items()}
 
-# --- VUE PRINCIPALE : LISTE DES POKÉMONS ---
+# --- VUE PRINCIPALE : LISTE DES POKÉMONS (PAGE INDEX) ---
 def index(request):
     # Chargement de la liste "légère" des 151 (juste noms + urls)
     url = 'https://pokeapi.co/api/v2/pokemon?limit=151'
@@ -176,7 +177,7 @@ def index(request):
 
     return render(request, 'pokedex/index.html', {'pokemons': pokemons_to_display, 'query': query})
 
-# --- VUE : LE DETAIL POKEMON SELECTIONNE ---
+# --- VUE : LE DETAIL POKEMON SELECTIONNE (PAGE POKEMON) ---
 def pokemon_detail(request, pokemon_id):
     # URL 1 : Infos techniques (Poids, stats, sprites...)
     url_pokemon = f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}"
@@ -235,12 +236,13 @@ def pokemon_detail(request, pokemon_id):
         
     return render(request, 'pokedex/pokemon.html', context)
 
-# --- VUE INSCRIPTION UTILISATEUR ---
+# --- VUE INSCRIPTION UTILISATEUR (PAGE SIGNUP)---
 class SignUpView(generic.CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login') # Redirection connexion
     template_name = 'registration/signup.html'
 
+# --- VUE CAPTURE POKÉMON (PAGE INDEX et POKEMON) ---
 @login_required
 def capture_pokemon(request):
     #Post de la capture d'un pokémon 
@@ -259,6 +261,7 @@ def capture_pokemon(request):
         
     return redirect(request.META.get('HTTP_REFERER', 'index'))
 
+# --- VUE PROFIL UTILISATEUR (PAGE PROFILE) ---
 @login_required
 def profile(request):
     # Recupération des captures de l'utilisateur connecté
@@ -266,6 +269,7 @@ def profile(request):
     
     return render(request, 'pokedex/profile.html', {'captures': captures})
 
+# --- VUE RELACHEMENT POKÉMON (PAGE PROFILE) ---
 @login_required
 def release_pokemon(request, pokemon_id):
     # On cherche le pokémon correspondant à l'ID ET à l'utilisateur connecté pour le supprimer
@@ -275,9 +279,27 @@ def release_pokemon(request, pokemon_id):
     
     return redirect('profile')
 
+# --- VUE EDITION PROFIL UTILISATEUR (PAGE EDIT_PROFILE) ---
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        # On charge le formulaire avec les données envoyées (POST) et l'utilisateur actuel (instance)
+        form = ProfileEditForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile') # Retour au profil après sauvegarde
+    else:
+        # On charge le formulaire avec les infos actuelles de l'utilisateur
+        form = ProfileEditForm(instance=request.user)
+    
+    return render(request, 'pokedex/edit_profile.html', {'form': form})
 
+# --- VUE EQUIPES (PAGE TEAMS) ---
+@login_required
 def team(request):
     return render(request, 'pokedex/teams.html')
 
+# --- VUE COMBATS (PAGE FIGHTS) ---
+@login_required
 def fight(request):
     return render(request, 'pokedex/fights.html')
