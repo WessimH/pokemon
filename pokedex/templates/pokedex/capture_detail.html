@@ -1,0 +1,94 @@
+{% extends 'pokedex/base.html' %} {% block content %}
+<div class="container mx-auto px-4 py-10 flex justify-center">
+  <div
+    class="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row"
+  >
+    <div
+      class="bg-slate-800 w-full md:w-1/3 p-8 flex flex-col items-center justify-center text-white relative"
+    >
+      <div
+        class="absolute top-4 left-4 bg-white/20 px-3 py-1 rounded-full text-xs font-bold"
+      >
+        Niveau {{ pokemon.level }}
+      </div>
+
+      <img
+        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ pokemon.pokemon_id }}.png"
+        alt="{{ pokemon.name }}"
+        class="w-48 h-48 object-contain drop-shadow-2xl z-10 animate-bounce-slow"
+      />
+
+      <h1 class="text-3xl font-extrabold mt-4 capitalize">
+        {{ pokemon.nickname|default:pokemon.name }}
+      </h1>
+
+      {% if pokemon.nickname != pokemon.name %}
+      <p class="text-slate-400 text-sm">({{ pokemon.name }})</p>
+      {% endif %}
+
+      <div class="mt-8 flex gap-2">
+        <a
+          href="{% url 'profile' %}"
+          class="px-4 py-2 rounded-full border border-white/30 hover:bg-white/10 transition text-sm font-bold"
+        >
+          ← Retour
+        </a>
+      </div>
+    </div>
+
+    <div class="w-full md:w-2/3 p-8">
+      <h2
+        class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"
+      >
+        Statistiques de Combat
+      </h2>
+
+      <div class="space-y-6">
+        {% for stat in stats %}
+        <div>
+          <div class="flex justify-between mb-1">
+            <span class="text-sm font-bold text-slate-700"
+              >{{ stat.name }}</span
+            >
+            <span class="text-sm font-extrabold text-slate-900"
+              >{{ stat.value }}</span
+            >
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div
+              class="{{ stat.color }} h-4 rounded-full transition-all duration-1000 ease-out"
+              style="width: {{ stat.percent }}%"
+            ></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div
+        class="mt-8 p-4 bg-yellow-50 rounded-xl border border-yellow-200 text-xs text-yellow-800"
+      >
+        <p>
+          <strong>Note du Professeur :</strong> Ces statistiques sont calculées
+          en temps réel en fonction du potentiel inné (Base) et du niveau
+          d'entraînement de ton Pokémon.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes bounce-slow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  .animate-bounce-slow {
+    animation: bounce-slow 3s infinite ease-in-out;
+  }
+</style>
+{% endblock %}

@@ -261,6 +261,61 @@ def capture_pokemon(request):
         
     return redirect(request.META.get('HTTP_REFERER', 'index'))
 
+# --- VUE DETAIL D'UN POKÉMON CAPTURÉ (PAGE PROFILE) ---
+@login_required
+def capture_detail(request, capture_id):
+    # On récupère LA capture précise 
+    capture = get_object_or_404(PokemonCapture, id=capture_id, user=request.user)
+    
+    # On demande à l'API les stats de base de cette espèce
+    url = f"https://pokeapi.co/api/v2/pokemon/{capture.pokemon_id}"
+    response = requests.get(url)
+    
+    stats_display = []
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Mapping pour traduire les stats en FR et mettre des couleurs
+        stat_translations = {
+            'hp': ('PV', 'bg-green-500'),
+            'attack': ('Attaque', 'bg-red-500'),
+            'defense': ('Défense', 'bg-blue-500'),
+            'special-attack': ('Atq. Spé.', 'bg-pink-500'),
+            'special-defense': ('Déf. Spé.', 'bg-purple-500'),
+            'speed': ('Vitesse', 'bg-yellow-400'),
+        }
+
+        # La Boucle de Calcul
+        for s in data['stats']:
+            name_en = s['stat']['name']
+            base_stat = s['base_stat']
+            
+            # Formule simplifiée de Pokémon (Base * 2 * Niveau / 100 + 5)
+            # Pour les PV, la formule est un peu différente dans le vrai jeu, mais restons simples
+            if name_en == 'hp':
+                real_value = int((base_stat * 2 * capture.level) / 100 + capture.level + 10)
+            else:
+                real_value = int((base_stat * 2 * capture.level) / 100 + 5)
+                
+            name_fr, color = stat_translations.get(name_en, (name_en, 'bg-gray-500'))
+            
+            # On prépare une barre de progression (max 300 pour l'affichage)
+            percent = min((real_value / 300) * 100, 100)
+
+            stats_display.append({
+                'name': name_fr,
+                'value': real_value,
+                'base': base_stat, # On garde la stat de base pour info
+                'color': color,
+                'percent': percent
+            })
+
+    return render(request, 'pokedex/capture_detail.html', {
+        'pokemon': capture,
+        'stats': stats_display
+    })
+
 # --- VUE PROFIL UTILISATEUR (PAGE PROFILE) ---
 @login_required
 def profile(request):
