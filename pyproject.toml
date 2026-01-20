@@ -13,6 +13,20 @@ dependencies = [
     "python-dotenv (>=1.2.1,<2.0.0)"
 ]
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.0"
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+
+[tool.poetry]
+package-mode = false
+
 [tool.poetry.scripts]
 manage = "manage:main"
 
