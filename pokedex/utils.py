@@ -1,24 +1,24 @@
 # Dictionnaire de traduction des types et couleurs
 TYPE_TRANSLATIONS = {
-    "normal": ("Normal", "#A8A77A"),
-    "fire": ("Feu", "#EE8130"),
-    "water": ("Eau", "#6390F0"),
-    "electric": ("Électrik", "#F7D02C"),
-    "grass": ("Plante", "#7AC74C"),
-    "ice": ("Glace", "#96D9D6"),
-    "fighting": ("Combat", "#C22E28"),
-    "poison": ("Poison", "#A33EA1"),
-    "ground": ("Sol", "#E2BF65"),
-    "flying": ("Vol", "#A98FF3"),
-    "psychic": ("Psy", "#F95587"),
-    "bug": ("Insecte", "#A6B91A"),
-    "rock": ("Roche", "#B6A136"),
-    "ghost": ("Spectre", "#735797"),
-    "dragon": ("Dragon", "#6F35FC"),
-    "steel": ("Acier", "#B7B7CE"),
-    "fairy": ("Fée", "#D685AD"),
+    # Format : "type_anglais": ("Type Français", "nom_couleur_tailwind")
+    "normal": ("Normal", "gray"),
+    "fire": ("Feu", "red"),
+    "water": ("Eau", "blue"),
+    "electric": ("Électrik", "yellow"),
+    "grass": ("Plante", "green"),
+    "ice": ("Glace", "cyan"),
+    "fighting": ("Combat", "orange"),
+    "poison": ("Poison", "purple"),
+    "ground": ("Sol", "amber"),
+    "flying": ("Vol", "sky"),
+    "psychic": ("Psy", "pink"),
+    "bug": ("Insecte", "lime"),
+    "rock": ("Roche", "stone"),
+    "ghost": ("Spectre", "violet"),
+    "dragon": ("Dragon", "indigo"),
+    "steel": ("Acier", "slate"),
+    "fairy": ("Fée", "rose"),
 }
-
 # Dictionnaire de mapping Français -> Anglais
 FRENCH_TO_ENGLISH = {
     "bulbizarre": "bulbasaur",
