@@ -15,8 +15,8 @@ class ProfileEditForm(forms.ModelForm):
             self.fields[field].widget.attrs.update(
                 {
                     "class": (
-                        "w-full border-gray-300 rounded-lg shadow-sm "
-                        "focus:border-red-500 focus:ring-red-500 py-2 px-3 text-gray-700"
+                    "w-full border-gray-300 rounded-lg shadow-sm "
+                    "focus:border-red-500 focus:ring-red-500 py-2 px-3 text-gray-700"
                     )
                 }
             )
