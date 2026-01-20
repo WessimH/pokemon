@@ -1,5 +1,6 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class PokemonCapture(models.Model):
 
@@ -8,9 +9,9 @@ class PokemonCapture(models.Model):
     pokemon_id = models.IntegerField()  # L'ID officiel 
     name = models.CharField(max_length=100) # Le nom 
     
-    nickname = models.CharField(max_length=100, blank=True, null=True) # Surnom optionnel
+    nickname = models.CharField(max_length=100, blank=True, null=True)
     level = models.IntegerField(default=1) # Niveau du Pokémon (commence à 1)
-    experience = models.IntegerField(default=0) # Pour monter de niveau plus tard
+    experience = models.IntegerField(default=0) 
     
     # Est-ce qu'il est dans l'équipe active (max 6) ?
     in_team = models.BooleanField(default=False) 

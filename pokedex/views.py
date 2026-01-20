@@ -1,12 +1,16 @@
 import random
-from django.shortcuts import get_object_or_404, render, redirect
-import requests 
+
+import requests
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
-from django.contrib.auth.decorators import login_required
+
+from .forms import ProfileEditForm
 from .models import PokemonCapture
-from .utils import TYPE_TRANSLATIONS, FRENCH_TO_ENGLISH, ENGLISH_TO_FRENCH
+from .utils import ENGLISH_TO_FRENCH, FRENCH_TO_ENGLISH, TYPE_TRANSLATIONS
+
 
 # --- VUE PRINCIPALE : LISTE DES POKÉMONS (PAGE INDEX) ---
 def index(request):
@@ -53,7 +57,9 @@ def index(request):
                         poke_id = details['id']
                         type_en = details['types'][0]['type']['name']
                         
-                        type_fr, color = TYPE_TRANSLATIONS.get(type_en, (type_en, 'gray'))
+                        type_fr, color = TYPE_TRANSLATIONS.get(
+                            type_en, (type_en, 'gray')
+                        )
                         
                         name_en = item['name']
                         name_fr = ENGLISH_TO_FRENCH.get(name_en, name_en).capitalize()
@@ -70,7 +76,9 @@ def index(request):
     except requests.exceptions.RequestException:
         pass
 
-    return render(request, 'pokedex/index.html', {'pokemons': pokemons_to_display, 'query': query})
+    return render(request, 'pokedex/index.html', 
+                  {'pokemons': pokemons_to_display, 'query': query}
+                )
 
 # --- VUE : LE DETAIL POKEMON SELECTIONNE (PAGE POKEMON) ---
 def pokemon_detail(request, pokemon_id):
@@ -122,7 +130,9 @@ def pokemon_detail(request, pokemon_id):
                     'type': type_fr,
                     'color': color,
                     'stats': stats,
-                    'sprite': data_pk['sprites']['other']['official-artwork']['front_default']
+                    'sprite': data_pk['sprites']['other']['official-artwork'][
+                        'front_default'
+                    ],
                 }
             }
     except Exception as e:
@@ -213,9 +223,13 @@ def capture_detail(request, capture_id):
             base_stat = s['base_stat']
             
             if name_en == 'hp':
-                real_value = int((base_stat * 2 * capture.level) / 100 + capture.level + 10)
+                real_value = int(
+                    (base_stat * 2 * capture.level) / 100 + capture.level + 10
+                )
             else:
-                real_value = int((base_stat * 2 * capture.level) / 100 + 5)
+                real_value = int(
+                    (base_stat * 2 * capture.level) / 100 + 5
+                )
                 
             name_fr, color = stat_translations.get(name_en, (name_en, 'bg-gray-500'))
             percent = min((real_value / 300) * 100, 100)
@@ -247,7 +261,7 @@ def profile(request):
 # --- VUE RELACHEMENT POKÉMON (PAGE PROFILE) ---
 @login_required
 def release_pokemon(request, pokemon_id):
-    # On cherche le pokémon correspondant à l'ID ET à l'utilisateur connecté pour le supprimer
+    # Suppression d'un pokemon capturé 
     pokemon = get_object_or_404(PokemonCapture, id=pokemon_id, user=request.user)
     
     pokemon.delete()
@@ -258,7 +272,6 @@ def release_pokemon(request, pokemon_id):
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
-        # On charge le formulaire avec les données envoyées (POST) et l'utilisateur actuel (instance)
         form = ProfileEditForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()

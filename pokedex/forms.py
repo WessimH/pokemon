@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 
+
 class ProfileEditForm(forms.ModelForm):
     class Meta:
         model = User
@@ -16,5 +17,8 @@ class ProfileEditForm(forms.ModelForm):
         super(ProfileEditForm, self).__init__(*args, **kwargs)
         for field in self.fields:
             self.fields[field].widget.attrs.update({
-                'class': 'w-full border-gray-300 rounded-lg shadow-sm focus:border-red-500 focus:ring-red-500 py-2 px-3 text-gray-700'
+                'class': (
+                    'w-full border-gray-300 rounded-lg shadow-sm '
+                    'focus:border-red-500 focus:ring-red-500 py-2 px-3 text-gray-700'
+)
             })
