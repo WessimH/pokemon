@@ -10,13 +10,12 @@ class ProfileEditForm(forms.ModelForm):
 
     # Ajout du style Tailwind CSS aux champs du formulaire
     def __init__(self, *args, **kwargs):
-        super(ProfileEditForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        style = (
+            "w-full border-gray-300 rounded-lg shadow-sm "
+            "focus:border-red-500 focus:ring-red-500 py-2 px-3 text-gray-700"
+        )
+
         for field in self.fields:
-            self.fields[field].widget.attrs.update(
-                {
-                    "class": (
-                    "w-full border-gray-300 rounded-lg shadow-sm "
-                    "focus:border-red-500 focus:ring-red-500 py-2 px-3 text-gray-700"
-                    )
-                }
-            )
+            self.fields[field].widget.attrs.update({"class": style})
