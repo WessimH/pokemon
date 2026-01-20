@@ -4,9 +4,10 @@ from .models import PokemonCapture
 
 # Register your models here.
 
+
 # On crée une configuration simple pour l'admin
 @admin.register(PokemonCapture)
 class PokemonCaptureAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'level', 'in_team', 'captured_at') 
-    list_filter = ('user', 'in_team') 
-    search_fields = ('name', 'user__username') 
+    list_display = ("name", "user", "level", "in_team", "captured_at")
+    list_filter = ("user", "in_team")
+    search_fields = ("name", "user__username")

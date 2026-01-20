@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -15,24 +14,32 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='PokemonCapture',
+            name="PokemonCapture",
             fields=[
-                ('id', models.BigAutoField(
-                    auto_created=True, primary_key=True, serialize=False,
-                    verbose_name='ID'
-                )),
-                ('pokemon_id', models.IntegerField()),
-                ('name', models.CharField(max_length=100)),
-                ('nickname', models.CharField(blank=True, max_length=100, null=True)),
-                ('level', models.IntegerField(default=1)),
-                ('experience', models.IntegerField(default=0)),
-                ('in_team', models.BooleanField(default=False)),
-                ('captured_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("pokemon_id", models.IntegerField()),
+                ("name", models.CharField(max_length=100)),
+                ("nickname", models.CharField(blank=True, max_length=100, null=True)),
+                ("level", models.IntegerField(default=1)),
+                ("experience", models.IntegerField(default=0)),
+                ("in_team", models.BooleanField(default=False)),
+                ("captured_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='captures',
-                        to=settings.AUTH_USER_MODEL
-            )),
+                        related_name="captures",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]
