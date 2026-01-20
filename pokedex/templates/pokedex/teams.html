@@ -1,0 +1,29 @@
+{% extends 'pokedex/base.html' %} {% block content %}
+<div class="container mx-auto py-10 px-4">
+  <div class="flex justify-between items-center mb-8">
+    <h2 class="text-3xl font-bold text-slate-800">Mes Équipes Pokémon</h2>
+    <button
+      class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition transform hover:scale-105"
+    >
+      + Créer une équipe
+    </button>
+  </div>
+
+  <div
+    class="bg-white rounded-3xl p-10 text-center shadow-inner border-2 border-dashed border-slate-300"
+  >
+    <div
+      class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl"
+    >
+      🏆
+    </div>
+    <h3 class="text-xl font-semibold text-slate-600 mb-2">
+      Aucune équipe formée
+    </h3>
+    <p class="text-slate-500 max-w-md mx-auto">
+      Tu n'as pas encore d'équipe prête au combat. Rassemble tes 6 meilleurs
+      Pokémon pour défier les autres dresseurs !
+    </p>
+  </div>
+</div>
+{% endblock %}
