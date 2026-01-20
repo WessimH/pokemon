@@ -1,4 +1,5 @@
 import random
+
 import requests
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
@@ -100,7 +101,7 @@ def pokemon_detail(request, pokemon_id):
             data_pk = response_pk.json()
 
             # --- RECUPERATION DU NOM FRANCAIS ---
-            name_fr = data_pk["name"] # Valeur par défaut
+            name_fr = data_pk["name"]  # Valeur par défaut
 
             if response_sp.status_code == 200:
                 data_sp = response_sp.json()
@@ -267,8 +268,8 @@ def capture_detail(request, capture_id):
             "height": height_m,
             "weight": weight_kg,
             "description": description,
-            "type": type_fr,   # Ajouté pour le template
-            "color": color,    # Ajouté pour le template
+            "type": type_fr,  # Ajouté pour le template
+            "color": color,  # Ajouté pour le template
         },
     )
 
