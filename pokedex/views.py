@@ -6,112 +6,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.contrib.auth.decorators import login_required
 from .models import PokemonCapture
-from .forms import ProfileEditForm
-
-# Dictionnaire pour la traduction des type et couleurs associées 
-TYPE_TRANSLATIONS = {
-    'grass': ('Plante', 'green'),
-    'fire': ('Feu', 'red'),
-    'water': ('Eau', 'blue'),
-    'electric': ('Électrik', 'yellow'),
-    'psychic': ('Psy', 'purple'),
-    'normal': ('Normal', 'gray'),
-    'ice': ('Glace', 'cyan'),
-    'fighting': ('Combat', 'orange'),
-    'poison': ('Poison', 'fuchsia'),
-    'ground': ('Sol', 'amber'),
-    'flying': ('Vol', 'indigo'),
-    'bug': ('Insecte', 'lime'),
-    'rock': ('Roche', 'stone'),
-    'ghost': ('Spectre', 'violet'),
-    'dragon': ('Dragon', 'rose'),
-    'steel': ('Acier', 'slate'),
-    'fairy': ('Fée', 'pink'),
-}
-# Dictionnaire pour la traduction des noms de Pokémon du français vers l'anglais pour la recherche 
-FRENCH_TO_ENGLISH = {
-    'bulbizarre': 'bulbasaur', 'herbizarre': 'ivysaur', 'florizarre': 'venusaur',
-    'salamèche': 'charmander', 'reptincel': 'charmeleon', 'dracaufeu': 'charizard',
-    'carapuce': 'squirtle', 'carabaffe': 'wartortle', 'tortank': 'blastoise',
-    'chenipan': 'caterpie', 'chrysacier': 'metapod', 'papilusion': 'butterfree',
-    'aspicot': 'weedle', 'coconfort': 'kakuna', 'dardargnan': 'beedrill',
-    'roucool': 'pidgey', 'roucoups': 'pidgeotto', 'roucarnage': 'pidgeot',
-    'rattata': 'rattata', 'rattatac': 'raticate',
-    'piafabec': 'spearow', 'rapasdepic': 'fearow',
-    'abo': 'ekans', 'arbok': 'arbok',
-    'pikachu': 'pikachu', 'raichu': 'raichu',
-    'sabelette': 'sandshrew', 'sablaireau': 'sandslash',
-    'nidoran♀': 'nidoran-f', 'nidorina': 'nidorina', 'nidoqueen': 'nidoqueen',
-    'nidoran♂': 'nidoran-m', 'nidorino': 'nidorino', 'nidoking': 'nidoking',
-    'mélofée': 'clefairy', 'mélodelfe': 'clefable',
-    'goupix': 'vulpix', 'feunard': 'ninetales',
-    'rondoudou': 'jigglypuff', 'grodoudou': 'wigglytuff',
-    'nosferapti': 'zubat', 'nosferalto': 'golbat',
-    'mystherbe': 'oddish', 'ortide': 'gloom', 'rafflesia': 'vileplume',
-    'paras': 'paras', 'parasect': 'parasect',
-    'mimitoss': 'venonat', 'aéromite': 'venomoth',
-    'taupiqueur': 'diglett', 'triopikeur': 'dugtrio',
-    'miaouss': 'meowth', 'persian': 'persian',
-    'psykokwak': 'psyduck', 'akwakwak': 'golduck',
-    'férosinge': 'mankey', 'colossinge': 'primeape',
-    'caninos': 'growlithe', 'arcanin': 'arcanine',
-    'ptitard': 'poliwag', 'têtarte': 'poliwhirl', 'tartard': 'poliwrath',
-    'abra': 'abra', 'kadabra': 'kadabra', 'alakazam': 'alakazam',
-    'machoc': 'machop', 'machopeur': 'machoke', 'mackogneur': 'machamp',
-    'chétiflor': 'bellsprout', 'boustiflor': 'weepinbell', 'empiflor': 'victreebel',
-    'tentacool': 'tentacool', 'tentacruel': 'tentacruel',
-    'racaillou': 'geodude', 'gravalanch': 'graveler', 'grolem': 'golem',
-    'ponyta': 'ponyta', 'galopa': 'rapidash',
-    'ramoloss': 'slowpoke', 'flagadoss': 'slowbro',
-    'magnéti': 'magnemite', 'magnéton': 'magneton',
-    'canarticho': 'farfetchd',
-    'doduo': 'doduo', 'dodrio': 'dodrio',
-    'otaria': 'seel', 'lamantine': 'dewgong',
-    'tadmorv': 'grimer', 'grotadmorv': 'muk',
-    'kokiyas': 'shellder', 'crustabri': 'cloyster',
-    'fantominus': 'gastly', 'spectrum': 'haunter', 'ectoplasma': 'gengar',
-    'onix': 'onix',
-    'soporifik': 'drowzee', 'hypnomade': 'hypno',
-    'krabby': 'krabby', 'krabboss': 'kingler',
-    'voltorbe': 'voltorb', 'électrode': 'electrode',
-    'noeunoeuf': 'exeggcute', 'noadkoko': 'exeggutor',
-    'osselait': 'cubone', 'ossatueur': 'marowak',
-    'kicklee': 'hitmonlee', 'tygnon': 'hitmonchan',
-    'excelangue': 'lickitung',
-    'smogo': 'koffing', 'smogogo': 'weezing',
-    'rhinocorne': 'rhyhorn', 'rhinoféros': 'rhydon',
-    'leveinard': 'chansey',
-    'saquedeneu': 'tangela',
-    'kangourex': 'kangaskhan',
-    'hypotrempe': 'horsea', 'hypocéan': 'seadra',
-    'poissirène': 'goldeen', 'poissoroy': 'seaking',
-    'stari': 'staryu', 'staross': 'starmie',
-    'm. mime': 'mr-mime',
-    'insécateur': 'scyther',
-    'lippoutou': 'jynx',
-    'élektek': 'electabuzz',
-    'magmar': 'magmar',
-    'scarabrute': 'pinsir',
-    'tauros': 'tauros',
-    'magicarpe': 'magikarp', 'léviator': 'gyarados',
-    'lokhlass': 'lapras',
-    'métamorph': 'ditto',
-    'évoli': 'eevee', 'aquali': 'vaporeon', 'voltali': 'jolteon', 'pyroli': 'flareon',
-    'porygon': 'porygon',
-    'amonita': 'omanyte', 'amonistar': 'omastar',
-    'kabuto': 'kabuto', 'kabutops': 'kabutops',
-    'ptéra': 'aerodactyl',
-    'ronflex': 'snorlax',
-    'artikodin': 'articuno',
-    'électhor': 'zapdos',
-    'sulfura': 'moltres',
-    'minidraco': 'dratini', 'draco': 'dragonair', 'dracolosse': 'dragonite',
-    'mewtwo': 'mewtwo',
-    'mew': 'mew'
-}
-
-# On inverse le dictionnaire : { 'bulbasaur': 'bulbizarre', ... }
-ENGLISH_TO_FRENCH = {v: k for k, v in FRENCH_TO_ENGLISH.items()}
+from .utils import TYPE_TRANSLATIONS, FRENCH_TO_ENGLISH, ENGLISH_TO_FRENCH
 
 # --- VUE PRINCIPALE : LISTE DES POKÉMONS (PAGE INDEX) ---
 def index(request):
@@ -266,7 +161,7 @@ def capture_pokemon(request):
 def capture_detail(request, capture_id):
     capture = get_object_or_404(PokemonCapture, id=capture_id, user=request.user)
     
-    # --- 1. GESTION DU RENOMMAGE (POST) ---
+    # --- GESTION DU RENOMMAGE (POST) ---
     if request.method == 'POST':
         new_nickname = request.POST.get('nickname')
         if new_nickname:
@@ -275,7 +170,7 @@ def capture_detail(request, capture_id):
             # On recharge la page pour voir le changement
             return redirect('capture_detail', capture_id=capture.id)
 
-    # --- 2. RÉCUPERATION DES DONNÉES API ---
+    # --- RÉCUPERATION DES DONNÉES API ---
     url = f"https://pokeapi.co/api/v2/pokemon/{capture.pokemon_id}"
     response = requests.get(url)
     
@@ -291,8 +186,7 @@ def capture_detail(request, capture_id):
         height_m = data['height'] / 10
         weight_kg = data['weight'] / 10
 
-        # --- 3. RÉCUPERATION DE LA DESCRIPTION (Second appel API) ---
-        # L'URL de l'espèce est donnée dans la première réponse
+        # --- RÉCUPERATION DE LA DESCRIPTION (Second appel API) ---
         species_url = data['species']['url']
         species_response = requests.get(species_url)
         
@@ -301,10 +195,10 @@ def capture_detail(request, capture_id):
             # On cherche la première description en Français
             for entry in species_data['flavor_text_entries']:
                 if entry['language']['name'] == 'fr':
-                    description = entry['flavor_text'].replace("\n", " ") # Nettoyage du texte
+                    description = entry['flavor_text'].replace("\n", " ")
                     break
 
-        # --- 4. CALCUL DES STATS (Inchangé) ---
+        # --- CALCUL DES STATS ---
         stat_translations = {
             'hp': ('PV', 'bg-green-500'),
             'attack': ('Attaque', 'bg-red-500'),

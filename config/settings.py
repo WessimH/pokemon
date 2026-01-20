@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -117,7 +118,5 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Redirection après connexion réussie (le 'name' de ta route index)
-LOGIN_REDIRECT_URL = 'index'
-# Redirection après déconnexion
-LOGOUT_REDIRECT_URL = 'index'
+LOGIN_REDIRECT_URL = os.getenv('LOGIN_REDIRECT_URL', 'index')
+LOGOUT_REDIRECT_URL = os.getenv('LOGOUT_REDIRECT_URL', 'index')
