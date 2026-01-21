@@ -157,6 +157,19 @@ class SignUpView(generic.CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
+    
+    # On créé l'utilisateur puis ses 5 équipes
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        for position in range(5):
+            Team.objects.create(
+                user=self.object,
+                name=f"Équipe {position + 1}",
+                position=position
+            )
+        
+        return response
 
 
 # --- VUE CAPTURE POKÉMON (PAGE INDEX et POKEMON) ---

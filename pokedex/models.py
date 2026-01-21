@@ -46,6 +46,12 @@ class Team(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="teams")
     name = models.CharField(max_length=100)
     pokemons = models.ManyToManyField(PokemonCapture, related_name="teams")
+    # Pour numéroter les équipes de 0 à 4
+    position = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"{self.name} de {self.user.username}"
+        return f"{self.name} (Position {self.position + 1}) de {self.user.username}"
+    
+    class Meta:
+        unique_together = ("user", "position")
+        ordering = ["position"]
