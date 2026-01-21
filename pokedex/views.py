@@ -8,7 +8,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from .fight_logic import FightManager
-from .forms import ProfileEditForm, TeamCreationForm
+from .forms import ProfileEditForm
 from .models import PokemonCapture, Team
 from .utils import ENGLISH_TO_FRENCH, FRENCH_TO_ENGLISH, TYPE_TRANSLATIONS
 
@@ -320,48 +320,80 @@ def edit_profile(request):
 # --- VUE EQUIPES (PAGE TEAMS) ---
 @login_required
 def team(request):
-    user_teams = Team.objects.filter(user=request.user)
+    user_teams = Team.objects.filter(user=request.user).order_by("position")
 
+    # On affiche la premiere équipe par défaut
+    selected_team_position = int(request.GET.get("team", 0))
+    selected_team = user_teams.get(position=selected_team_position)
+    
+    # Actions de modification
     if request.method == "POST":
-        form = TeamCreationForm(request.POST, user=request.user)
-        if form.is_valid():
-            new_team = form.save(commit=False)
-            new_team.user = request.user
-            new_team.save()
-            # method save_m2m is required for ManyToManyField with commit=False
-            form.save_m2m()
-            return redirect("team")
-    else:
-        form = TeamCreationForm(user=request.user)
+        action = request.POST.get("action")
+        
+        # Renommer une équipe
+        if action == "rename":
+            new_name = request.POST.get("team_name", "").strip()
+            if new_name and len(new_name) <= 100:
+                selected_team.name = new_name
+                selected_team.save()
+            return redirect(f"/teams/?team={selected_team_position}")
+        
+        # Ajouter un pokemon
+        elif action == "add_pokemon":
+            pokemon_capture_id = request.POST.get("pokemon_id") # Id BDD pas num de pokemon 
+            
+            try:
+                pokemon = PokemonCapture.objects.get(
+                    id=pokemon_capture_id, 
+                    user=request.user
+                )
+                
+                # Vérifier que l'équipe n'a pas déjà 5 Pokémon
+                if selected_team.pokemons.count() >= 5:
+                    pass
+                
+                # Vérifier que le Pokémon est pas déjà dans l'équipe
+                elif selected_team.pokemons.filter(id=pokemon.id).exists():
+                    pass
 
-    return render(request, "pokedex/teams.html", {"teams": user_teams, "form": form})
+                selected_team.pokemons.add(pokemon)                
+            except PokemonCapture.DoesNotExist:
+                pass
+            
+            return redirect(f"/teams/?team={selected_team_position}")
+        
+        # supprimer un pokemon de l'équipe
+        elif action == "remove_pokemon":
+            pokemon_capture_id = request.POST.get("pokemon_id")
+            
+            try:
+                pokemon = selected_team.pokemons.get(id=pokemon_capture_id)
+                selected_team.pokemons.remove(pokemon)
+                
+            except PokemonCapture.DoesNotExist:
+                pass
+            
+            return redirect(f"/teams/?team={selected_team_position}")
+    
+    # Récupérer les pokémon de l'équipe sélectionnée
+    team_pokemons = selected_team.pokemons.all()
+    
+    # Récupérer les autres
+    available_pokemons = PokemonCapture.objects.filter(user=request.user).exclude(
+        teams=selected_team
+    )
+    
+    context = {
+        "teams": user_teams,
+        "selected_team": selected_team,
+        "selected_team_position": selected_team_position,
+        "team_pokemons": team_pokemons,
+        "available_pokemons": available_pokemons,
+    }
+    
+    return render(request, "pokedex/teams.html", context)
 
 
-# --- VUE EDITION EQUIPE (PAGE TEAM_EDIT) ---
-@login_required
-def team_edit(request, team_id):
-    team = get_object_or_404(Team, id=team_id, user=request.user)
-
-    if request.method == "POST":
-        form = TeamCreationForm(request.POST, instance=team, user=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect("team")
-    else:
-        form = TeamCreationForm(instance=team, user=request.user)
-
-    return render(request, "pokedex/team_edit.html", {"form": form, "team": team})
-
-
-# --- VUE SUPPRESSION EQUIPE (ACTION DELETE) ---
-@login_required
-def team_delete(request, team_id):
-    team = get_object_or_404(Team, id=team_id, user=request.user)
-
-    if request.method == "POST":
-        team.delete()
-
-    return redirect("team")
 
 
 # --- VUE COMBATS (PAGE FIGHTS) ---
