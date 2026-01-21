@@ -7,8 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 
-from .forms import ProfileEditForm
-from .models import PokemonCapture
+from .forms import ProfileEditForm, TeamCreationForm
+from .models import PokemonCapture, Team
 from .utils import ENGLISH_TO_FRENCH, FRENCH_TO_ENGLISH, TYPE_TRANSLATIONS
 
 
@@ -296,7 +296,21 @@ def edit_profile(request):
 # --- VUE EQUIPES (PAGE TEAMS) ---
 @login_required
 def team(request):
-    return render(request, "pokedex/teams.html")
+    user_teams = Team.objects.filter(user=request.user)
+
+    if request.method == "POST":
+        form = TeamCreationForm(request.POST, user=request.user)
+        if form.is_valid():
+            new_team = form.save(commit=False)
+            new_team.user = request.user
+            new_team.save()
+            # method save_m2m is required for ManyToManyField with commit=False
+            form.save_m2m()
+            return redirect("team")
+    else:
+        form = TeamCreationForm(user=request.user)
+
+    return render(request, "pokedex/teams.html", {"teams": user_teams, "form": form})
 
 
 # --- VUE COMBATS (PAGE FIGHTS) ---

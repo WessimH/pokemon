@@ -40,3 +40,12 @@ class PokemonCapture(models.Model):
 
         self.save()
         return leveled_up
+
+
+class Team(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="teams")
+    name = models.CharField(max_length=100)
+    pokemons = models.ManyToManyField(PokemonCapture, related_name="teams")
+
+    def __str__(self):
+        return f"{self.name} de {self.user.username}"
