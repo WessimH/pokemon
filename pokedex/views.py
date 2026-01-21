@@ -323,21 +323,34 @@ def fight(request):
 
         # --- START FIGHT ---
         if action_type == "start":
-            team_id = request.POST.get("team_id")
-            my_team = get_object_or_404(Team, id=team_id, user=request.user)
-
-            # Adversaire aléatoire (autre que notre équipe)
-            others = Team.objects.exclude(id=team_id)
-            if others.exists():
-                opp_team = random.choice(list(others))
+            mode = request.POST.get("mode", "pve")
+            team1_id = request.POST.get("team1_id")
+            
+            # Team 1 (Toujours celle du joueur)
+            t1 = get_object_or_404(Team, id=team1_id, user=request.user)
+            
+            if mode == "pvp":
+                team2_id = request.POST.get("team2_id")
+                # Pour le multi local, on autorise de prendre une autre équipe
+                # du même user ou une équipe d'un autre (si on veut).
+                # Restons sur user teams pour simplifier l'UI.
+                t2 = get_object_or_404(Team, id=team2_id)
+                
+                manager = FightManager(t1, t2, mode="pvp")
+                request.session["fight_input_phase"] = "p1" # P1 commence
             else:
-                # Fallback : Mirror match
-                opp_team = my_team
+                # PVE: Adversaire aléatoire
+                others = Team.objects.exclude(id=team1_id)
+                if others.exists():
+                    t2 = random.choice(list(others))
+                else:
+                    t2 = t1 # Mirror match fallback
 
-            manager = FightManager(my_team, opp_team)
+                manager = FightManager(t1, t2, mode="pve")
+
             # Sauvegarde en session
             request.session["fight_state"] = manager.get_state()
-            request.session["fight_teams"] = {"p1": my_team.id, "p2": opp_team.id}
+            request.session["fight_teams"] = {"p1": t1.id, "p2": t2.id}
 
             return redirect("fight")
 
@@ -352,29 +365,54 @@ def fight(request):
                 t2 = get_object_or_404(Team, id=team_ids["p2"])
 
                 manager = FightManager(t1, t2, session_state=state)
-
-                # Action Joueur
-                move = request.POST.get("move")  # 'attack' ou 'switch_X'
-                p1_action = {"type": "attack"}
-
+                
+                # Parsing de l'action reçue
+                move = request.POST.get("move")
+                action = {"type": "attack"}
                 if move and move.startswith("switch_"):
                     idx = int(move.split("_")[1])
-                    p1_action = {"type": "switch", "index": idx}
-
-                # Exécution
-                manager.execute_turn(p1_action)
-
-                # Sauvegarde
-                request.session["fight_state"] = manager.get_state()
+                    action = {"type": "switch", "index": idx}
+                
+                # Logique selon le mode
+                if manager.mode == "pve":
+                    # Execution directe (P1 vs IA)
+                    manager.execute_turn(action)
+                    request.session["fight_state"] = manager.get_state()
+                    
+                elif manager.mode == "pvp":
+                    phase = request.session.get("fight_input_phase", "p1")
+                    
+                    if phase == "p1":
+                        # On stocke le choix de P1 et on passe à P2
+                        request.session["p1_pending_action"] = action
+                        request.session["fight_input_phase"] = "p2"
+                    
+                    elif phase == "p2":
+                        # On récupère P1 et on exécute tout
+                        p1_action = request.session.get("p1_pending_action")
+                        p2_action = action
+                        
+                        manager.execute_turn(p1_action, p2_action)
+                        
+                        # Reset pour le prochain tour
+                        request.session["fight_state"] = manager.get_state()
+                        request.session["fight_input_phase"] = "p1"
+                        if "p1_pending_action" in request.session:
+                            del request.session["p1_pending_action"]
 
             return redirect("fight")
 
         # --- QUIT ---
         elif action_type == "quit":
-            if "fight_state" in request.session:
-                del request.session["fight_state"]
-            if "fight_teams" in request.session:
-                del request.session["fight_teams"]
+            keys = [
+                "fight_state",
+                "fight_teams",
+                "fight_input_phase",
+                "p1_pending_action",
+            ]
+            for k in keys:
+                if k in request.session:
+                    del request.session[k]
             return redirect("fight")
 
     # 2. AFFICHAGE (GET)
@@ -382,8 +420,11 @@ def fight(request):
 
     if state:
         # MODE COMBAT
+        input_phase = request.session.get("fight_input_phase", "p1")
         return render(
-            request, "pokedex/fights.html", {"state": state, "in_fight": True}
+            request, 
+            "pokedex/fights.html", 
+            {"state": state, "in_fight": True, "input_phase": input_phase}
         )
     else:
         # MODE SELECTION

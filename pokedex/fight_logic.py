@@ -11,10 +11,11 @@ TYPE_CHART = {
 
 
 class FightManager:
-    def __init__(self, team1, team2, session_state=None):
+    def __init__(self, team1, team2, session_state=None, mode="pve"):
         self.team1 = team1
         self.team2 = team2
-        
+        self.mode = mode
+
         if session_state:
             self.turn = session_state["turn"]
             self.log = session_state["log"]
@@ -23,6 +24,7 @@ class FightManager:
             self.team2_state = session_state["team2"]["pokemons"]
             self.active_p1 = session_state["team1"]["active_index"]
             self.active_p2 = session_state["team2"]["active_index"]
+            self.mode = session_state.get("mode", "pve")
         else:
             self.turn = 0
             self.log = []
@@ -37,9 +39,7 @@ class FightManager:
         for p in team.pokemons.all():
             # Calcul simple des HP max: voir models.py ou formule standard
             # Ici on reprend la formule de capture_detail pour la cohérence
-            max_hp = int(
-                (p.pokemon_id * 0.1 + p.level) * 3 + 10
-            )  # Formule arbitraire
+            max_hp = int((p.pokemon_id * 0.1 + p.level) * 3 + 10)  # Formule arbitraire
             # On devrait idéalement appeler l'API pour les stats de base,
             # mais pour l'instant on simule
             # Pour faire mieux, il faudrait stocker les stats de base
@@ -68,6 +68,7 @@ class FightManager:
             "turn": self.turn,
             "log": self.log,
             "winner": self.winner,
+            "mode": self.mode,
             "team1": {
                 "name": self.team1.name,
                 "active_index": self.active_p1,
@@ -107,21 +108,37 @@ class FightManager:
             else:
                 self.log.append(f"Switch impossible vers {idx}.")
 
-        # IA: Switch si KO, sinon Attaque
-        p2_poke = self.team2_state[self.active_p2]
-        if p2_poke["fainted"]:
-            # Trouver un vivant
-            found = False
-            for i, p in enumerate(self.team2_state):
-                if not p["fainted"]:
-                    self.active_p2 = i
-                    self.log.append(f"L'adversaire envoie {p['name']} !")
-                    found = True
-                    break
-            if not found:
-                self.winner = "team1"
-                self.log.append("L'adversaire n'a plus de Pokémon !")
-                return
+        if self.mode == "pve":
+            # IA: Switch si KO, sinon Attaque
+            p2_poke = self.team2_state[self.active_p2]
+            if p2_poke["fainted"]:
+                # Trouver un vivant
+                found = False
+                for i, p in enumerate(self.team2_state):
+                    if not p["fainted"]:
+                        self.active_p2 = i
+                        self.log.append(f"L'adversaire envoie {p['name']} !")
+                        found = True
+                        break
+                if not found:
+                    self.winner = "team1"
+                    self.log.append("L'adversaire n'a plus de Pokémon !")
+                    return
+        elif self.mode == "pvp" and action_p2:
+             # Joueur 2
+             if action_p2["type"] == "switch":
+                idx = int(action_p2["index"])
+                if (
+                    0 <= idx < len(self.team2_state)
+                    and not self.team2_state[idx]["fainted"]
+                ):
+                    self.active_p2 = idx
+                    self.log.append(
+                        f"{self.team2.user.username} envoie "
+                        f"{self.team2_state[idx]['name']} !"
+                    )
+                else:
+                    self.log.append(f"Switch inv. P2 vers {idx}.")
 
         # 2. Combat (si pas de switch P1 et P1 vivant)
         p1_poke = self.team1_state[self.active_p1]
@@ -148,8 +165,14 @@ class FightManager:
                     self.log.append(f"{self.team1.name} remporte la victoire !")
                     return
 
-        # Réplique P2 (si vivant et pas encore KO ce tour)
-        if not p2_poke["fainted"] and not p1_poke["fainted"]:
+        if (
+            (
+                self.mode == "pve"
+                or (self.mode == "pvp" and action_p2 and action_p2["type"] == "attack")
+            )
+            and not p2_poke["fainted"]
+            and not p1_poke["fainted"]
+        ):
             dmg = self._calculate_damage(p2_poke, p1_poke)
             p1_poke["current_hp"] = max(0, p1_poke["current_hp"] - dmg)
             self.log.append(
