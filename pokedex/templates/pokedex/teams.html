@@ -1,29 +1,140 @@
-{% extends 'pokedex/base.html' %} {% block content %}
+{% extends 'pokedex/base.html' %}
+
+{% block content %}
 <div class="container mx-auto py-10 px-4">
+  <!-- En-tête -->
   <div class="flex justify-between items-center mb-8">
     <h2 class="text-3xl font-bold text-slate-800">Mes Équipes Pokémon</h2>
-    <button
-      class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition transform hover:scale-105"
-    >
-      + Créer une équipe
-    </button>
   </div>
 
-  <div
-    class="bg-white rounded-3xl p-10 text-center shadow-inner border-2 border-dashed border-slate-300"
-  >
-    <div
-      class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl"
-    >
-      🏆
+  <!-- Liste des équipes existantes -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+    {% for team in teams %}
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+      <h3 class="text-xl font-bold text-slate-700 mb-4 flex justify-between">
+        {{ team.name }}
+        <div class="flex gap-2">
+          <a href="{% url 'team_edit' team.id %}" class="text-blue-500 hover:text-blue-700 text-sm">
+            ✏️ Modifier
+          </a>
+          <form action="{% url 'team_delete' team.id %}" method="post"
+            onsubmit="return confirm('Voulez-vous vraiment supprimer cette équipe ?');">
+            {% csrf_token %}
+            <button type="submit" class="text-red-500 hover:text-red-700 text-sm">
+              🗑️ Supprimer
+            </button>
+          </form>
+        </div>
+      </h3>
+      <div class="flex justify-between items-center bg-slate-50 rounded-xl p-3">
+        {% for pokemon in team.pokemons.all %}
+        <div class="flex flex-col items-center">
+          <!-- On suppose que pokemon_detail a récupéré le sprite ou on utilise un placeholder. 
+                 PokemonCapture n'a pas de champ sprite stocké, mais l'ID permet de le retrouver 
+                 via URL externe ou une méthode. Pour l'instant on affiche le nom.
+                 Si on veut les images, il faudrait peut-être enrichir les données dans la vue 
+                 ou utiliser une URL directe pokeapi. -->
+          <img
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ pokemon.pokemon_id }}.png"
+            alt="{{ pokemon.name }}" class="w-12 h-12 object-contain">
+          <span class="text-xs text-slate-600 font-medium mt-1">{{ pokemon.name }}</span>
+        </div>
+        {% endfor %}
+      </div>
     </div>
-    <h3 class="text-xl font-semibold text-slate-600 mb-2">
-      Aucune équipe formée
-    </h3>
-    <p class="text-slate-500 max-w-md mx-auto">
-      Tu n'as pas encore d'équipe prête au combat. Rassemble tes 6 meilleurs
-      Pokémon pour défier les autres dresseurs !
-    </p>
+    {% empty %}
+    <div
+      class="col-span-full bg-white rounded-3xl p-10 text-center shadow-inner border-2 border-dashed border-slate-300">
+      <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+        🏆
+      </div>
+      <h3 class="text-xl font-semibold text-slate-600 mb-2">Aucune équipe formée</h3>
+      <p class="text-slate-500 max-w-md mx-auto">
+        Tu n'as pas encore d'équipe prête au combat. Crée ta première équipe ci-dessous !
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Formulaire de création -->
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto border border-slate-200">
+    <div class="bg-slate-800 px-6 py-4 border-b border-slate-700">
+      <h3 class="text-xl font-bold text-white flex items-center gap-2">
+        <span>⚔️</span> Créer une nouvelle équipe
+      </h3>
+    </div>
+
+    <form method="post" class="p-8">
+      {% csrf_token %}
+
+      <!-- Erreurs globales -->
+      {% if form.non_field_errors %}
+      <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 text-red-700">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <!-- Nom de l'équipe -->
+      <div class="mb-8">
+        <label class="block text-slate-700 font-semibold mb-2" for="{{ form.name.id_for_label }}">
+          Nom de l'équipe
+        </label>
+        {{ form.name }}
+        {% if form.name.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Sélection des Pokémons -->
+      <div class="mb-8">
+        <label class="block text-slate-700 font-semibold mb-4">
+          Sélectionnez exactement 5 Pokémons :
+        </label>
+
+        <div
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-96 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200">
+          {% for checkbox in form.pokemons %}
+          <div class="relative group">
+            <label class="cursor-pointer block h-full">
+              <!-- Le checkbox caché mais fonctionnel -->
+              {{ checkbox.tag }}
+
+              <!-- Carte visuelle -->
+              <div
+                class="border-2 border-slate-200 rounded-xl p-3 bg-white hover:border-blue-400 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all h-full flex flex-col items-center text-center">
+                <!-- On essaie d'extraire l'ID du Pokémon depuis le label ou l'objet choice 
+                      Mais checkbox.choice_label est juste le __str__. 
+                      Pour avoir l'image, c'est plus dur sans custom widget. 
+                      On va faire simple pour l'instant : juste le label. -->
+                <span class="text-sm font-medium text-slate-700">{{ checkbox.choice_label }}</span>
+              </div>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        {% if form.pokemons.errors %}
+        <div class="mt-2 text-red-500 font-semibold text-center">
+          {{ form.pokemons.errors.0 }}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Bouton soumission -->
+      <div class="text-center">
+        <button type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transition transform hover:scale-105">
+          Valider l'équipe
+        </button>
+      </div>
+    </form>
   </div>
 </div>
+
+<style>
+  /* Style custom pour les checkboxes si besoin */
+  input[type="checkbox"]:checked+div {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+  }
+</style>
 {% endblock %}
