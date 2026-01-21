@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 
+from .fight_logic import FightManager
 from .forms import ProfileEditForm, TeamCreationForm
 from .models import PokemonCapture, Team
 from .utils import ENGLISH_TO_FRENCH, FRENCH_TO_ENGLISH, TYPE_TRANSLATIONS
@@ -316,4 +317,77 @@ def team(request):
 # --- VUE COMBATS (PAGE FIGHTS) ---
 @login_required
 def fight(request):
-    return render(request, "pokedex/fights.html")
+    # 1. GESTION ACTIONS (POST)
+    if request.method == "POST":
+        action_type = request.POST.get("action_type")
+
+        # --- START FIGHT ---
+        if action_type == "start":
+            team_id = request.POST.get("team_id")
+            my_team = get_object_or_404(Team, id=team_id, user=request.user)
+
+            # Adversaire aléatoire (autre que notre équipe)
+            others = Team.objects.exclude(id=team_id)
+            if others.exists():
+                opp_team = random.choice(list(others))
+            else:
+                # Fallback : Mirror match
+                opp_team = my_team
+
+            manager = FightManager(my_team, opp_team)
+            # Sauvegarde en session
+            request.session["fight_state"] = manager.get_state()
+            request.session["fight_teams"] = {"p1": my_team.id, "p2": opp_team.id}
+
+            return redirect("fight")
+
+        # --- COMBAT ACTION ---
+        elif action_type == "turn":
+            state = request.session.get("fight_state")
+            team_ids = request.session.get("fight_teams")
+
+            if state and team_ids:
+                # On recharge les objets Team
+                t1 = get_object_or_404(Team, id=team_ids["p1"])
+                t2 = get_object_or_404(Team, id=team_ids["p2"])
+
+                manager = FightManager(t1, t2, session_state=state)
+
+                # Action Joueur
+                move = request.POST.get("move")  # 'attack' ou 'switch_X'
+                p1_action = {"type": "attack"}
+
+                if move and move.startswith("switch_"):
+                    idx = int(move.split("_")[1])
+                    p1_action = {"type": "switch", "index": idx}
+
+                # Exécution
+                manager.execute_turn(p1_action)
+
+                # Sauvegarde
+                request.session["fight_state"] = manager.get_state()
+
+            return redirect("fight")
+
+        # --- QUIT ---
+        elif action_type == "quit":
+            if "fight_state" in request.session:
+                del request.session["fight_state"]
+            if "fight_teams" in request.session:
+                del request.session["fight_teams"]
+            return redirect("fight")
+
+    # 2. AFFICHAGE (GET)
+    state = request.session.get("fight_state")
+
+    if state:
+        # MODE COMBAT
+        return render(
+            request, "pokedex/fights.html", {"state": state, "in_fight": True}
+        )
+    else:
+        # MODE SELECTION
+        my_teams = Team.objects.filter(user=request.user)
+        return render(
+            request, "pokedex/fights.html", {"teams": my_teams, "in_fight": False}
+        )
