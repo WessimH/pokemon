@@ -12,5 +12,7 @@ urlpatterns = [
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("capture/<int:capture_id>/", views.capture_detail, name="capture_detail"),
     path("teams/", views.team, name="team"),
+    path("teams/edit/<int:team_id>/", views.team_edit, name="team_edit"),
+    path("teams/delete/<int:team_id>/", views.team_delete, name="team_delete"),
     path("fights/", views.fight, name="fight"),
 ]
