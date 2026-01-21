@@ -43,11 +43,20 @@ class PokemonCapture(models.Model):
 
 
 class Team(models.Model):
+    POSITION_CHOICES = [
+        (0, "Équipe 1"),
+        (1, "Équipe 2"),
+        (2, "Équipe 3"),
+        (3, "Équipe 4"),
+        (4, "Équipe 5"),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="teams")
     name = models.CharField(max_length=100)
     pokemons = models.ManyToManyField(PokemonCapture, related_name="teams")
-    # Pour numéroter les équipes de 0 à 4
-    position = models.IntegerField(default=0)
+    
+    # Avec position_choice on oblige à avoir entre 0 et 4
+    position = models.IntegerField(choices=POSITION_CHOICES, default=0)
 
     def __str__(self):
         return f"{self.name} (Position {self.position + 1}) de {self.user.username}"
