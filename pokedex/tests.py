@@ -39,7 +39,10 @@ class TeamTests(TestCase):
         }
         form_less = TeamCreationForm(data=data_less, user=self.user)
         self.assertFalse(form_less.is_valid())
-        self.assertIn("Une équipe doit contenir exactement 5 Pokémons.", form_less.errors["pokemons"])
+        self.assertIn(
+            "Une équipe doit contenir exactement 5 Pokémons.",
+            form_less.errors["pokemons"],
+        )
 
         # Cas avec 6 pokémons
         data_more = {
@@ -48,7 +51,10 @@ class TeamTests(TestCase):
         }
         form_more = TeamCreationForm(data=data_more, user=self.user)
         self.assertFalse(form_more.is_valid())
-        self.assertIn("Une équipe doit contenir exactement 5 Pokémons.", form_more.errors["pokemons"])
+        self.assertIn(
+            "Une équipe doit contenir exactement 5 Pokémons.",
+            form_more.errors["pokemons"],
+        )
 
     def test_team_creation_form_wrong_user(self):
         """Test qu'on ne peut pas ajouter les pokémons d'un autre utilisateur"""
@@ -61,8 +67,49 @@ class TeamTests(TestCase):
             "name": "Team Cheater",
             "pokemons": [other_pokemon.id] + [p.id for p in self.pokemons[:4]],
         }
-        # Le form filtre le queryset par user, donc other_pokemon ne sera même pas un choix valide
+        # Le form filtre le queryset par user
+        # donc other_pokemon ne sera même pas un choix valide
         form = TeamCreationForm(data=data, user=self.user)
         self.assertFalse(form.is_valid())
-        # L'erreur standard Django pour un choix hors queryset est "Select a valid choice..."
+        # L'erreur standard Django pour un choix hors queryset
+        # est "Select a valid choice..."
         self.assertTrue(form.errors["pokemons"])
+
+    def test_team_edit(self):
+        """Test la modification d'une équipe"""
+        # Création initiale
+        team = Team.objects.create(name="Original Team", user=self.user)
+        team.pokemons.set(self.pokemons[:5])
+
+        # Modification : CHANGEMENT DE NOM et de POKEMON
+        new_pokemons = [
+            self.pokemons[0].id,
+            self.pokemons[2].id,
+            self.pokemons[3].id,
+            self.pokemons[4].id,
+            self.pokemons[5].id,
+        ]
+
+        data = {
+            "name": "Updated Team",
+            "pokemons": new_pokemons,
+        }
+        form = TeamCreationForm(data=data, instance=team, user=self.user)
+        self.assertTrue(form.is_valid())
+        form.save()
+        
+        team.refresh_from_db()
+        self.assertEqual(team.name, "Updated Team")
+        self.assertEqual(team.pokemons.count(), 5)
+        self.assertIn(self.pokemons[5], team.pokemons.all())
+        self.assertNotIn(self.pokemons[1], team.pokemons.all())
+
+    def test_team_delete(self):
+        """Test la suppression d'une équipe"""
+        team = Team.objects.create(name="To Delete", user=self.user)
+        team.pokemons.set(self.pokemons[:5])
+        
+        team_id = team.id
+        team.delete()
+        
+        self.assertFalse(Team.objects.filter(id=team_id).exists())

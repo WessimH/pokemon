@@ -1,0 +1,94 @@
+{% extends 'pokedex/base.html' %}
+
+{% block content %}
+<div class="container mx-auto py-10 px-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center mb-6">
+            <a href="{% url 'team' %}" class="text-blue-500 hover:text-blue-700 mr-4">
+                ← Retour aux équipes
+            </a>
+            <h2 class="text-3xl font-bold text-slate-800">Modifier l'équipe : {{ team.name }}</h2>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+            <div class="bg-slate-800 px-6 py-4 border-b border-slate-700">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span>✏️</span> Modification
+                </h3>
+            </div>
+
+            <form method="post" class="p-8">
+                {% csrf_token %}
+
+                <!-- Erreurs globales -->
+                {% if form.non_field_errors %}
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 text-red-700">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Nom de l'équipe -->
+                <div class="mb-8">
+                    <label class="block text-slate-700 font-semibold mb-2" for="{{ form.name.id_for_label }}">
+                        Nom de l'équipe
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Sélection des Pokémons -->
+                <div class="mb-8">
+                    <label class="block text-slate-700 font-semibold mb-4">
+                        Sélectionnez exactement 5 Pokémons :
+                    </label>
+
+                    <div
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-96 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        {% for checkbox in form.pokemons %}
+                        <div class="relative group">
+                            <label class="cursor-pointer block h-full">
+                                <!-- Le checkbox caché mais fonctionnel -->
+                                {{ checkbox.tag }}
+
+                                <!-- Carte visuelle -->
+                                <div
+                                    class="border-2 border-slate-200 rounded-xl p-3 bg-white hover:border-blue-400 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all h-full flex flex-col items-center text-center">
+                                    <span class="text-sm font-medium text-slate-700">{{ checkbox.choice_label }}</span>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.pokemons.errors %}
+                    <div class="mt-2 text-red-500 font-semibold text-center">
+                        {{ form.pokemons.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Bouton soumission -->
+                <div class="text-center flex gap-4 justify-center">
+                    <a href="{% url 'team' %}"
+                        class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-10 rounded-full shadow-lg transition transform hover:scale-105">
+                        Annuler
+                    </a>
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transition transform hover:scale-105">
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Style custom pour les checkboxes si besoin */
+    input[type="checkbox"]:checked+div {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+    }
+</style>
+{% endblock %}

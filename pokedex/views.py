@@ -313,6 +313,33 @@ def team(request):
     return render(request, "pokedex/teams.html", {"teams": user_teams, "form": form})
 
 
+# --- VUE EDITION EQUIPE (PAGE TEAM_EDIT) ---
+@login_required
+def team_edit(request, team_id):
+    team = get_object_or_404(Team, id=team_id, user=request.user)
+
+    if request.method == "POST":
+        form = TeamCreationForm(request.POST, instance=team, user=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect("team")
+    else:
+        form = TeamCreationForm(instance=team, user=request.user)
+
+    return render(request, "pokedex/team_edit.html", {"form": form, "team": team})
+
+
+# --- VUE SUPPRESSION EQUIPE (ACTION DELETE) ---
+@login_required
+def team_delete(request, team_id):
+    team = get_object_or_404(Team, id=team_id, user=request.user)
+
+    if request.method == "POST":
+        team.delete()
+
+    return redirect("team")
+
+
 # --- VUE COMBATS (PAGE FIGHTS) ---
 @login_required
 def fight(request):
