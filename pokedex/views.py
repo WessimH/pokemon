@@ -16,69 +16,92 @@ from .utils import ENGLISH_TO_FRENCH, FRENCH_TO_ENGLISH, TYPE_TRANSLATIONS
 
 # --- VUE PRINCIPALE : LISTE DES POKÉMONS (PAGE INDEX) ---
 def index(request):
-    # Chargement de la liste "légère" des 151 (juste noms + urls)
-    url = "https://pokeapi.co/api/v2/pokemon?limit=151"
     pokemons_to_display = []
+    query = request.GET.get("q")  # On récupère la recherche tout de suite
 
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            all_results = response.json()["results"]
+    items_to_process = []
 
-            query = request.GET.get("q")
-            filtered_list = []
+    # ==========================================
+    # CAS 1 : C'EST UNE RECHERCHE
+    # ==========================================
+    if query:
+        # On doit charger la liste des 151 pour chercher dedans
+        url = "https://pokeapi.co/api/v2/pokemon?limit=151"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                all_results = response.json()["results"]
 
-            if query:
-                # --- LOGIQUE RECHERCHE ---
                 query = query.lower().strip()
                 search_term = FRENCH_TO_ENGLISH.get(query, query)
 
                 for item in all_results:
-                    # Recherche par ID
                     p_id = item["url"][:-1].split("/")[-1]
 
+                    # On cherche dans le nom ou l'ID
                     if search_term in item["name"] or query == p_id:
-                        filtered_list.append(item)
+                        items_to_process.append(item)
 
-                # 6 premier resultats max
-                filtered_list = filtered_list[:6]
+                # On limite à 6 résultats max pour la recherche
+                items_to_process = items_to_process[:6]
+        except requests.exceptions.RequestException:
+            pass
 
-            else:
-                # --- LOGIQUE HASARD (Index normal) ---
-                # 4 pokémons aléatoires
-                filtered_list = random.sample(all_results, 4)
+    # ==========================================
+    # CAS 2 : C'EST LE MODE "HASARD" (SESSION)
+    # ==========================================
+    else:
+        # Gestion de la session (Mémoire)
+        # Si on force "?new=true" OU s'il n'y a rien en mémoire
+        if request.GET.get("new") or "random_team_ids" not in request.session:
+            random_ids = random.sample(range(1, 152), 4)
+            request.session["random_team_ids"] = random_ids
+        else:
+            random_ids = request.session["random_team_ids"]
 
-            # --- ENRICHISSEMENT (On récupère les types/couleurs) ---
-            for item in filtered_list:
-                try:
-                    # Appel API détail pour CHAQUE résultat
-                    detail_response = requests.get(item["url"])
-                    if detail_response.status_code == 200:
-                        details = detail_response.json()
-                        poke_id = details["id"]
-                        type_en = details["types"][0]["type"]["name"]
+        # On construit manuellement la liste des items à traiter à partir des IDs
+        # Pas besoin de charger les 151 ici, on a juste besoin des URLs
+        for p_id in random_ids:
+            items_to_process.append(
+                {
+                    "url": f"https://pokeapi.co/api/v2/pokemon/{p_id}/",
+                    # On ne connait pas encore le nom, on le trouvera dans le détail
+                    "name": "loading...",
+                }
+            )
 
-                        type_fr, color = TYPE_TRANSLATIONS.get(
-                            type_en, (type_en, "gray")
-                        )
+    # ==========================================
+    # ENRICHISSEMENT (Commun aux deux cas)
+    # ==========================================
+    for item in items_to_process:
+        try:
+            detail_response = requests.get(item["url"])
+            if detail_response.status_code == 200:
+                details = detail_response.json()
 
-                        name_en = item["name"]
-                        name_fr = ENGLISH_TO_FRENCH.get(name_en, name_en).capitalize()
+                poke_id = details["id"]
+                type_en = details["types"][0]["type"]["name"]
 
-                        pokemons_to_display.append(
-                            {
-                                "id": poke_id,
-                                "name": name_fr,
-                                "color": color,
-                                "type": type_fr,
-                                "sprite": details["sprites"]["front_default"],
-                            }
-                        )
-                except Exception:
-                    continue
+                # Traduction Type / Couleur
+                type_fr, color = TYPE_TRANSLATIONS.get(type_en, (type_en, "gray"))
 
-    except requests.exceptions.RequestException:
-        pass
+                # Traduction Nom
+                # Note: On prend le nom depuis 'details' car dans le cas 'Session',
+                # item['name'] n'est pas fiable.
+                name_en = details["name"]
+                name_fr = ENGLISH_TO_FRENCH.get(name_en, name_en).capitalize()
+
+                pokemons_to_display.append(
+                    {
+                        "id": poke_id,
+                        "name": name_fr,
+                        "color": color,
+                        "type": type_fr,
+                        "sprite": details["sprites"]["front_default"],
+                    }
+                )
+        except Exception:
+            continue
 
     return render(
         request, "pokedex/index.html", {"pokemons": pokemons_to_display, "query": query}
@@ -132,6 +155,24 @@ def pokemon_detail(request, pokemon_id):
                 name_fr_stat = stat_translations.get(name_en, name_en)
                 stats.append({"name": name_fr_stat, "value": stat["base_stat"]})
 
+            current_team = request.session.get("random_team_ids", [])
+
+            # Si Le Pokémon affiché fait partie des 4 élus du hasard
+            if pokemon_id in current_team:
+                # On trouve à quelle position il est (0, 1, 2 ou 3)
+                current_index = current_team.index(pokemon_id)
+
+                # Le précédent : On recule de 1. Le modulo permet de boucler
+                prev_id = current_team[(current_index - 1) % 4]
+
+                # Le suivant : On avance de 1. Le modulo permet de boucler
+                next_id = current_team[(current_index + 1) % 4]
+
+            # Si C'est un Pokémon hors liste (accès direct ou recherche)
+            else:
+                # Logique classique (1 -> 2 -> 3...)
+                prev_id = pokemon_id - 1 if pokemon_id > 1 else 151
+                next_id = pokemon_id + 1 if pokemon_id < 151 else 1
             context = {
                 "pokemon": {
                     "id": data_pk["id"],
@@ -144,7 +185,9 @@ def pokemon_detail(request, pokemon_id):
                     "sprite": data_pk["sprites"]["other"]["official-artwork"][
                         "front_default"
                     ],
-                }
+                },
+                "previous_id": prev_id,
+                "next_id": next_id,
             }
     except Exception as e:
         print(f"Erreur API: {e}")
@@ -188,6 +231,7 @@ def capture_pokemon(request):
             name=clean_name,
             nickname=clean_name,
         )
+    messages.success(request, f"Félicitations ! Vous avez capturé {clean_name} !", extra_tags="capture_pokemon")
 
     return redirect(request.META.get("HTTP_REFERER", "index"))
 
@@ -273,6 +317,19 @@ def capture_detail(request, capture_id):
                     "percent": percent,
                 }
             )
+            all_user_captures = list(
+                PokemonCapture.objects.filter(user=request.user)
+                .order_by("-captured_at")
+                .values_list("id", flat=True)
+            )
+
+    # 2. On trouve l'index du Pokémon actuel
+    current_index = all_user_captures.index(capture.id)
+    total_captures = len(all_user_captures)
+
+    prev_capture_id = all_user_captures[(current_index - 1) % total_captures]
+
+    next_capture_id = all_user_captures[(current_index + 1) % total_captures]
 
     return render(
         request,
@@ -285,6 +342,8 @@ def capture_detail(request, capture_id):
             "description": description,
             "type": type_fr,  # Ajouté pour le template
             "color": color,  # Ajouté pour le template
+            "prev_capture_id": prev_capture_id,
+            "next_capture_id": next_capture_id,
         },
     )
 
@@ -337,9 +396,9 @@ def team(request):
             if new_name and len(new_name) <= 100:
                 old_name = selected_team.name
                 selected_team.rename_team(new_name)
-                messages.success(request, f"Équipe renommée : {old_name} -> {new_name}")
+                messages.success(request, f"Équipe renommée : {old_name} -> {new_name}", extra_tags="modification_success")
             else:
-                messages.error(request, "Nom d'équipe invalide (1-100 caractères requis).")
+                messages.error(request, "Nom d'équipe invalide (1-100 caractères requis).", extra_tags="modification_error")
             return redirect(f"/teams/?team={selected_team_position}")
         
         # Ajouter un pokemon
@@ -354,17 +413,17 @@ def team(request):
                 
                 # Vérifier que l'équipe n'a pas déjà 5 Pokémon
                 if selected_team.pokemons.count() >= 5:
-                    messages.error(request, f"L'équipe {selected_team.name} est complète !")
+                    messages.error(request, f"{selected_team.name} a déjà 5 Pokémons", extra_tags="add_in_full_team")
                 
                 # Vérifier que le Pokémon est pas déjà dans l'équipe
                 elif selected_team.pokemons.filter(id=pokemon.id).exists():
-                    messages.warning(request, f"ℹ{pokemon.nickname} est déjà dans cette équipe !")
+                    messages.warning(request, f"ℹ{pokemon.nickname} est déjà dans cette équipe !", extra_tags="modification_error")
                 
                 else:
                     selected_team.add_pokemon(pokemon)
-                    messages.success(request, f"{pokemon.nickname} a été ajouté à l'équipe {selected_team.name} !")
+                    messages.success(request, f"{pokemon.nickname} a rejoint {selected_team.name} !", extra_tags="add_in_team")
             except PokemonCapture.DoesNotExist:
-                messages.error(request, "Ce Pokémon n'existe pas ou ne vous appartient pas.")
+                messages.error(request, "Ce Pokémon n'existe pas ou ne vous appartient pas.", extra_tags="modification_error")
             
             return redirect(f"/teams/?team={selected_team_position}")
         
@@ -375,10 +434,10 @@ def team(request):
             try:
                 pokemon = selected_team.pokemons.get(id=pokemon_capture_id)
                 selected_team.pokemons.remove(pokemon)
-                messages.success(request, f"{pokemon.nickname} a été retiré de l'équipe.")
+                messages.success(request, f"{pokemon.nickname} a quitté l'équipe.", extra_tags="remove_from_team")
                 
             except PokemonCapture.DoesNotExist:
-                messages.error(request, "Impossible de retirer ce Pokémon.")
+                messages.error(request, "Impossible de retirer ce Pokémon.", extra_tags="modification_error")
             
             return redirect(f"/teams/?team={selected_team_position}")
     
@@ -414,26 +473,26 @@ def fight(request):
         if action_type == "start":
             mode = request.POST.get("mode", "pve")
             team1_id = request.POST.get("team1_id")
-            
+
             # Team 1 (Toujours celle du joueur)
             t1 = get_object_or_404(Team, id=team1_id, user=request.user)
-            
+
             if mode == "pvp":
                 team2_id = request.POST.get("team2_id")
                 # Pour le multi local, on autorise de prendre une autre équipe
                 # du même user ou une équipe d'un autre (si on veut).
                 # Restons sur user teams pour simplifier l'UI.
                 t2 = get_object_or_404(Team, id=team2_id)
-                
+
                 manager = FightManager(t1, t2, mode="pvp")
-                request.session["fight_input_phase"] = "p1" # P1 commence
+                request.session["fight_input_phase"] = "p1"  # P1 commence
             else:
                 # PVE: Adversaire aléatoire
                 others = Team.objects.exclude(id=team1_id)
                 if others.exists():
                     t2 = random.choice(list(others))
                 else:
-                    t2 = t1 # Mirror match fallback
+                    t2 = t1  # Mirror match fallback
 
                 manager = FightManager(t1, t2, mode="pve")
 
@@ -454,35 +513,35 @@ def fight(request):
                 t2 = get_object_or_404(Team, id=team_ids["p2"])
 
                 manager = FightManager(t1, t2, session_state=state)
-                
+
                 # Parsing de l'action reçue
                 move = request.POST.get("move")
                 action = {"type": "attack"}
                 if move and move.startswith("switch_"):
                     idx = int(move.split("_")[1])
                     action = {"type": "switch", "index": idx}
-                
+
                 # Logique selon le mode
                 if manager.mode == "pve":
                     # Execution directe (P1 vs IA)
                     manager.execute_turn(action)
                     request.session["fight_state"] = manager.get_state()
-                    
+
                 elif manager.mode == "pvp":
                     phase = request.session.get("fight_input_phase", "p1")
-                    
+
                     if phase == "p1":
                         # On stocke le choix de P1 et on passe à P2
                         request.session["p1_pending_action"] = action
                         request.session["fight_input_phase"] = "p2"
-                    
+
                     elif phase == "p2":
                         # On récupère P1 et on exécute tout
                         p1_action = request.session.get("p1_pending_action")
                         p2_action = action
-                        
+
                         manager.execute_turn(p1_action, p2_action)
-                        
+
                         # Reset pour le prochain tour
                         request.session["fight_state"] = manager.get_state()
                         request.session["fight_input_phase"] = "p1"
@@ -511,9 +570,9 @@ def fight(request):
         # MODE COMBAT
         input_phase = request.session.get("fight_input_phase", "p1")
         return render(
-            request, 
-            "pokedex/fights.html", 
-            {"state": state, "in_fight": True, "input_phase": input_phase}
+            request,
+            "pokedex/fights.html",
+            {"state": state, "in_fight": True, "input_phase": input_phase},
         )
     else:
         # MODE SELECTION

@@ -214,7 +214,7 @@ class PvpTests(TestCase):
     def setUp(self):
         self.user1 = User.objects.create_user(username="u1", password="pw")
         self.user2 = User.objects.create_user(username="u2", password="pw")
-        
+
         # Team 1
         self.team1 = Team.objects.create(name="Team 1", user=self.user1)
         for i in range(5):
@@ -222,7 +222,7 @@ class PvpTests(TestCase):
                 user=self.user1, pokemon_id=i + 1, name=f"P1-{i}", level=10
             )
             self.team1.pokemons.add(p)
-            
+
         # Team 2
         self.team2 = Team.objects.create(name="Team 2", user=self.user2)
         for i in range(5):
@@ -237,35 +237,34 @@ class PvpTests(TestCase):
 
     def test_pvp_turn_execution(self):
         manager = FightManager(self.team1, self.team2, mode="pvp")
-        
-        # P1 Attacks, P2 Unknown yet (simulated logic in view handles the wait, 
+
+        # P1 Attacks, P2 Unknown yet (simulated logic in view handles the wait,
         # but manager.execute_turn expects p2_action if it's pvp and ready)
-        
+
         # 1. Only P1 action passed (should ideally not happen in full flow
         # but logic allows it)
         manager.execute_turn({"type": "attack"})
-        
+
         # In PvP with only P1 action, P2 (AI) should NOT trigger.
         # But P1 attack logic is generic so P1 attacks P2.
-        
+
         p2_hp_mid = manager.team2_state[0]["current_hp"]
         # P2 took damage
         self.assertLess(p2_hp_mid, manager.team2_state[0]["max_hp"])
-        
+
         # P1 hp should be full because P2 didn't attack (no AI)
         p1_hp_start = manager.team1_state[0]["current_hp"]
         self.assertEqual(p1_hp_start, manager.team1_state[0]["max_hp"])
 
     def test_pvp_turn_full(self):
         manager = FightManager(self.team1, self.team2, mode="pvp")
-        
+
         p1_hp_start = manager.team1_state[0]["current_hp"]
         p2_hp_start = manager.team2_state[0]["current_hp"]
 
         # Both attack
         manager.execute_turn({"type": "attack"}, {"type": "attack"})
-        
+
         # Both take damage
         self.assertLess(manager.team1_state[0]["current_hp"], p1_hp_start)
         self.assertLess(manager.team2_state[0]["current_hp"], p2_hp_start)
-

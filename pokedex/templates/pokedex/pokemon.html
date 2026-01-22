@@ -1,37 +1,43 @@
 {% extends 'pokedex/base.html' %} {% block content %}
-<div class="container mx-auto py-10 px-4">
-  <a
-    href="{% url 'index' %}"
-    class="inline-flex items-center text-slate-600 hover:text-red-600 font-bold mb-6 transition"
-  >
-    &larr; Retour au Pokedex
+<div class="flex justify-between items-center mb-8 max-w-4xl mx-auto px-4">
+  <a href="{% url 'pokemon_detail' previous_id %}"
+    class="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md text-slate-600 hover:text-red-500 hover:shadow-lg transition font-bold group">
+    <svg class="w-5 h-5 transform group-hover:-translate-x-1 transition" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    <span class="hidden sm:inline">Précédent</span>
   </a>
 
+  <a href="{% url 'index' %}" class="text-slate-400 hover:text-slate-600 font-bold text-sm">
+    Retour liste
+  </a>
+
+  <a href="{% url 'pokemon_detail' next_id %}"
+    class="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md text-slate-600 hover:text-red-500 hover:shadow-lg transition font-bold group">
+    <span class="hidden sm:inline">Suivant</span>
+    <svg class="w-5 h-5 transform group-hover:translate-x-1 transition" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </a>
+</div>
+<div class="container mx-auto py-10 px-4">
   {% if pokemon %}
-  <div
-    class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
-  >
-    <div
-      class="md:w-1/2 bg-{{ pokemon.color }}-100 p-10 flex flex-col items-center justify-center relative"
-    >
-      <div
-        class="absolute top-4 left-6 text-{{ pokemon.color }}-800 font-black text-6xl opacity-10"
-      >
+  <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+    <div class="md:w-1/2 bg-{{ pokemon.color }}-100 p-10 flex flex-col items-center justify-center relative">
+      <div class="absolute top-4 left-6 text-{{ pokemon.color }}-800 font-black text-6xl opacity-10">
         #{{ pokemon.id }}
       </div>
 
-      <img
-        src="{{ pokemon.sprite }}"
-        alt="{{ pokemon.name }}"
-        class="w-64 h-64 object-contain drop-shadow-2xl z-10 hover:scale-110 transition duration-500"
-      />
+      <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}"
+        class="w-64 h-64 object-contain drop-shadow-2xl z-10 hover:scale-110 transition duration-500" />
 
       <h1 class="text-4xl font-black text-slate-800 capitalize mt-6 mb-2">
         {{ pokemon.name }}
       </h1>
       <span
-        class="bg-{{ pokemon.color }}-500 text-white px-6 py-2 rounded-full font-bold uppercase tracking-widest shadow-lg"
-      >
+        class="bg-{{ pokemon.color }}-500 text-white px-6 py-2 rounded-full font-bold uppercase tracking-widest shadow-lg">
         {{ pokemon.type }}
       </span>
     </div>
@@ -43,20 +49,12 @@
 
       <div class="grid grid-cols-2 gap-4 mb-8">
         <div class="text-center p-4 bg-slate-50 rounded-xl">
-          <span class="block text-slate-400 text-xs uppercase font-bold"
-            >Poids</span
-          >
-          <span class="text-xl font-bold text-slate-800"
-            >{{ pokemon.weight }} kg</span
-          >
+          <span class="block text-slate-400 text-xs uppercase font-bold">Poids</span>
+          <span class="text-xl font-bold text-slate-800">{{ pokemon.weight }} kg</span>
         </div>
         <div class="text-center p-4 bg-slate-50 rounded-xl">
-          <span class="block text-slate-400 text-xs uppercase font-bold"
-            >Taille</span
-          >
-          <span class="text-xl font-bold text-slate-800"
-            >{{ pokemon.height }} m</span
-          >
+          <span class="block text-slate-400 text-xs uppercase font-bold">Taille</span>
+          <span class="text-xl font-bold text-slate-800">{{ pokemon.height }} m</span>
         </div>
       </div>
 
@@ -65,18 +63,12 @@
         {% for stat in pokemon.stats %}
         <div>
           <div class="flex justify-between mb-1">
-            <span class="text-sm font-medium text-slate-600 capitalize"
-              >{{ stat.name }}</span
-            >
-            <span class="text-sm font-bold text-slate-800"
-              >{{ stat.value }}</span
-            >
+            <span class="text-sm font-medium text-slate-600 capitalize">{{ stat.name }}</span>
+            <span class="text-sm font-bold text-slate-800">{{ stat.value }}</span>
           </div>
           <div class="w-full bg-slate-200 rounded-full h-2.5">
-            <div
-              class="bg-{{ pokemon.color }}-500 h-2.5 rounded-full"
-              style="width: {% widthratio stat.value 200 100 %}%"
-            ></div>
+            <div class="bg-{{ pokemon.color }}-500 h-2.5 rounded-full"
+              style="width: {% widthratio stat.value 200 100 %}%"></div>
           </div>
         </div>
         {% endfor %}
@@ -88,14 +80,17 @@
           <input type="hidden" name="pokemon_id" value="{{ pokemon.id }}" />
           <input type="hidden" name="pokemon_name" value="{{ pokemon.name }}" />
           <button
-            class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition shadow-lg"
-          >
-            Ajouter à mon équipe
+            class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition shadow-lg">
+            Ajouter à mes pokémons
           </button>
         </form>
       </div>
     </div>
   </div>
+  <a href="{% url 'index' %}"
+    class="inline-flex items-center text-slate-600 hover:text-red-600 font-bold mb-6 transition">
+    &larr; Retour au Pokedex
+  </a>
   {% else %}
   <div class="text-center py-20">
     <h2 class="text-2xl font-bold text-red-500">
