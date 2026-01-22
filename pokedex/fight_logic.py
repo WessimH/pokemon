@@ -125,8 +125,8 @@ class FightManager:
                     self.log.append("L'adversaire n'a plus de Pokémon !")
                     return
         elif self.mode == "pvp" and action_p2:
-             # Joueur 2
-             if action_p2["type"] == "switch":
+            # Joueur 2
+            if action_p2["type"] == "switch":
                 idx = int(action_p2["index"])
                 if (
                     0 <= idx < len(self.team2_state)
