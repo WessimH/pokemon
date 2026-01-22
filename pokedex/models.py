@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -60,6 +61,13 @@ class Team(models.Model):
 
     def __str__(self):
         return f"{self.name} (Position {self.position + 1}) de {self.user.username}"
+    
+    def add_pokemon(self, pokemon):
+        #check le nombre de pokemon
+        if self.pokemons.count() >= 5:
+            raise ValidationError("Une équipe ne peut pas avoir plus de 5 pokémons.")
+
+        self.pokemons.add(pokemon)
     
     class Meta:
         unique_together = ("user", "position")

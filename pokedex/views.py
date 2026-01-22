@@ -356,7 +356,7 @@ def team(request):
                 elif selected_team.pokemons.filter(id=pokemon.id).exists():
                     pass
 
-                selected_team.pokemons.add(pokemon)                
+                selected_team.add_pokemon(pokemon)
             except PokemonCapture.DoesNotExist:
                 pass
             
