@@ -1,12 +1,53 @@
 {% extends 'pokedex/base.html' %} {% block content %}
-<div class="container mx-auto py-10 px-4">
+<div class="flex justify-between items-center mb-8 max-w-4xl mx-auto px-4">
   <a
-    href="{% url 'index' %}"
-    class="inline-flex items-center text-slate-600 hover:text-red-600 font-bold mb-6 transition"
+    href="{% url 'pokemon_detail' previous_id %}"
+    class="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md text-slate-600 hover:text-red-500 hover:shadow-lg transition font-bold group"
   >
-    &larr; Retour au Pokedex
+    <svg
+      class="w-5 h-5 transform group-hover:-translate-x-1 transition"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M15 19l-7-7 7-7"
+      />
+    </svg>
+    <span class="hidden sm:inline">Précédent</span>
   </a>
 
+  <a
+    href="{% url 'index' %}"
+    class="text-slate-400 hover:text-slate-600 font-bold text-sm"
+  >
+    Retour liste
+  </a>
+
+  <a
+    href="{% url 'pokemon_detail' next_id %}"
+    class="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md text-slate-600 hover:text-red-500 hover:shadow-lg transition font-bold group"
+  >
+    <span class="hidden sm:inline">Suivant</span>
+    <svg
+      class="w-5 h-5 transform group-hover:translate-x-1 transition"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 5l7 7-7 7"
+      />
+    </svg>
+  </a>
+</div>
+<div class="container mx-auto py-10 px-4">
   {% if pokemon %}
   <div
     class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
@@ -90,12 +131,18 @@
           <button
             class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition shadow-lg"
           >
-            Ajouter à mon équipe
+            Ajouter à mes pokémons
           </button>
         </form>
       </div>
     </div>
   </div>
+  <a
+    href="{% url 'index' %}"
+    class="inline-flex items-center text-slate-600 hover:text-red-600 font-bold mb-6 transition"
+  >
+    &larr; Retour au Pokedex
+  </a>
   {% else %}
   <div class="text-center py-20">
     <h2 class="text-2xl font-bold text-red-500">
