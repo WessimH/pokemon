@@ -4,10 +4,10 @@
 <div class="container mx-auto py-10 px-4">
 
   {% if in_fight %}
-  <!-- --- MODE COMBAT --- -->
+  <!-- ================= MODE COMBAT ================= -->
   <div class="max-w-4xl mx-auto">
 
-    <!-- HEADER / TURN -->
+    <!-- HEADER -->
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bold text-slate-700">Tour {{ state.turn }}</h2>
       <form action="{% url 'fight' %}" method="post">
@@ -20,305 +20,252 @@
       </form>
     </div>
 
-    <!-- PVP PHASE INDICATOR -->
     {% if state.mode == 'pvp' and not state.winner %}
     <div class="mb-4 text-center">
-      <span class="px-6 py-2 rounded-full text-lg font-bold border-2 
-            {% if input_phase == 'p1' %}bg-blue-100 text-blue-700 border-blue-300
-            {% else %}bg-red-100 text-red-700 border-red-300{% endif %}">
-        Tour de : {% if input_phase == 'p1' %}{{ state.team1.user.username }}{% else %}{{ state.team2.user.username }}
-        (Joueur 2){% endif %}
+      <span class="px-6 py-2 rounded-full text-lg font-bold border-2
+      {% if input_phase == 'p1' %}
+        bg-blue-100 text-blue-700 border-blue-300
+      {% else %}
+        bg-red-100 text-red-700 border-red-300
+      {% endif %}
+    ">
+        Tour de :
+        {% if input_phase == 'p1' %}
+        {{ state.team1.user.username|default:"Joueur 1" }}
+        {% else %}
+        {{ state.team2.user.username|default:"Joueur 2" }}
+        {% endif %}
       </span>
     </div>
     {% endif %}
 
     <!-- ARENE -->
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 relative mb-8">
-      <!-- BACKGROUND -->
-      <div class="absolute inset-0 bg-gradient-to-b from-blue-100 to-green-100 opacity-50 z-0"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-blue-100 to-green-100 opacity-50"></div>
 
-      <!-- ADVERSAIRE (HAUT) -->
-      <div class="relative z-10 p-8 flex justify-end items-start border-b border-white/50">
+      <!-- ADVERSAIRE -->
+      <div class="relative z-10 p-8 flex justify-end border-b border-white/50">
+        {% for p in state.team2.pokemons %}
+        {% if forloop.counter0 == state.team2.active_index %}
         <div class="text-right">
-          <h3 class="text-xl font-bold text-slate-800">{{ state.team2.name }}</h3>
-          {% with p2=state.team2.pokemons|slice:state.team2.active_index|first %}
-          <!-- active_index est 0-based, slice retourne une liste, first prend le premier element -->
-          {% for p in state.team2.pokemons %}
-          {% if forloop.counter0 == state.team2.active_index %}
-          <div class="mt-2">
-            <div class="text-2xl font-bold text-slate-700">{{ p.name }} <span class="text-sm text-slate-500">Nv.{{
-                p.level }}</span></div>
-            <div class="w-64 bg-slate-200 rounded-full h-4 mt-2 ml-auto overflow-hidden border border-slate-300">
-              <div class="bg-red-500 h-full transition-all duration-500"
-                style="width: {% widthratio p.current_hp p.max_hp 100 %}%"></div>
-            </div>
-            <div class="text-sm font-mono text-slate-600 mt-1">{{ p.current_hp }} / {{ p.max_hp }} HP</div>
-
-            <!-- Image (Placeholder official artwork via ID) -->
-            <img
-              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
-              class="w-32 h-32 object-contain ml-auto mt-4 animate-bounce-slow" alt="{{ p.name }}">
+          <div class="text-2xl font-bold text-slate-700">
+            {{ p.name }} <span class="text-sm text-slate-500">Nv.{{ p.level }}</span>
           </div>
-          {% endif %}
-          {% endfor %}
-          {% endwith %}
+          <div class="w-64 bg-slate-200 rounded-full h-4 mt-2 ml-auto overflow-hidden border">
+            <div class="bg-red-500 h-full" style="width: {% widthratio p.current_hp p.max_hp 100 %}%"></div>
+          </div>
+          <div class="text-sm font-mono mt-1">{{ p.current_hp }} / {{ p.max_hp }} HP</div>
+          <img
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
+            class="w-32 h-32 object-contain ml-auto mt-4" alt="{{ p.name }}">
         </div>
+        {% endif %}
+        {% endfor %}
       </div>
 
-      <!-- JOUEUR (BAS) -->
-      <div class="relative z-10 p-8 flex justify-start items-end">
-        <div class="text-left w-full">
-
-          {% for p in state.team1.pokemons %}
-          {% if forloop.counter0 == state.team1.active_index %}
-          <div class="flex items-end gap-8">
-            <img
-              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
-              class="w-48 h-48 object-contain mb-4 transform scale-x-[-1]" alt="{{ p.name }}">
-
-            <div class="mb-8 flex-1">
-              <div class="text-2xl font-bold text-slate-700">{{ p.name }} <span class="text-sm text-slate-500">Nv.{{
-                  p.level }}</span></div>
-              <div class="w-64 bg-slate-200 rounded-full h-4 mt-2 overflow-hidden border border-slate-300">
-                <div class="bg-green-500 h-full transition-all duration-500"
-                  style="width: {% widthratio p.current_hp p.max_hp 100 %}%"></div>
-              </div>
-              <div class="text-sm font-mono text-slate-600 mt-1">{{ p.current_hp }} / {{ p.max_hp }} HP</div>
+      <!-- JOUEUR -->
+      <div class="relative z-10 p-8">
+        {% for p in state.team1.pokemons %}
+        {% if forloop.counter0 == state.team1.active_index %}
+        <div class="flex items-end gap-8">
+          <img
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
+            class="w-48 h-48 object-contain transform -scale-x-100" alt="{{ p.name }}">
+          <div class="flex-1">
+            <div class="text-2xl font-bold text-slate-700">
+              {{ p.name }} <span class="text-sm text-slate-500">Nv.{{ p.level }}</span>
             </div>
+            <div class="w-64 bg-slate-200 rounded-full h-4 mt-2 overflow-hidden border">
+              <div class="bg-green-500 h-full" style="width: {% widthratio p.current_hp p.max_hp 100 %}%"></div>
+            </div>
+            <div class="text-sm font-mono mt-1">{{ p.current_hp }} / {{ p.max_hp }} HP</div>
           </div>
-          {% endif %}
-          {% endfor %}
-
         </div>
+        {% endif %}
+        {% endfor %}
       </div>
     </div>
 
-    <!-- PANNEAU DE CONTROLE -->
+    <!-- CONTROLES -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-      <!-- ACTIONS -->
-      <div class="md:col-span-2 bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+      <div class="md:col-span-2 bg-white rounded-2xl shadow-lg border p-6">
+
         {% if state.winner %}
         <div class="text-center py-8">
           <h3 class="text-3xl font-bold mb-4">
-            {% if state.winner == "team1" %}
-            🎉 Victoire !
-            {% else %}
-            💀 Défaite...
-            {% endif %}
+            {% if state.winner == "team1" %}🎉 Victoire !{% else %}💀 Défaite...{% endif %}
           </h3>
           <form action="{% url 'fight' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="action_type" value="quit">
-            <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg">
-              Retour au menu
-            </button>
+            <button class="bg-blue-600 text-white py-3 px-8 rounded-full">Retour</button>
           </form>
         </div>
+
         {% else %}
-
-        <!-- --- CONTROLS LOGIC --- -->
-        {% if state.mode == 'pvp' and input_phase == 'p2' %}
-
-        <!-- CONTROLES JOUEUR 2 -->
-        <h3 class="font-bold text-red-700 mb-4">À vous, Joueur 2 ! ({{ state.team2.name }})</h3>
         <form action="{% url 'fight' %}" method="post" class="flex flex-col gap-4">
           {% csrf_token %}
           <input type="hidden" name="action_type" value="turn">
 
-          <!-- ATTAQUE P2 -->
           <button type="submit" name="move" value="attack"
-            class="w-full bg-red-600 hover:bg-red-700 text-white text-xl font-bold py-4 rounded-xl shadow-md transition transform hover:scale-[1.02] border-4 border-red-800">
-            🔥 ATTAQUER (P2)
-          </button>
-
-          <div class="border-t border-slate-200 my-2"></div>
-          <p class="text-sm text-slate-500 font-semibold mb-2">Changer de Pokémon (P2) :</p>
-
-          <!-- SWITCHS P2 -->
-          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            {% for p in state.team2.pokemons %}
-            <button type="submit" name="move" value="switch_{{ forloop.counter0 }}" {% if p.fainted or
-              forloop.counter0==state.team2.active_index %}disabled{% endif %}
-              class="p-2 border-2 rounded-lg text-xs font-bold text-center transition
-                        {% if p.fainted %}bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed
-                        {% elif forloop.counter0 == state.team2.active_index %}bg-red-50 border-red-500 text-red-700 ring-2 ring-red-200
-                        {% else %}bg-white border-slate-200 hover:border-red-400 hover:bg-red-50 text-slate-700{% endif %}">
-              {{ p.name }}
-              <div class="h-1 bg-slate-200 rounded-full mt-1 overflow-hidden">
-                <div class="h-full {% if p.fainted %}bg-gray-400{% else %}bg-red-500{% endif %}"
-                  style="width: {% widthratio p.current_hp p.max_hp 100 %}%"></div>
-              </div>
-            </button>
-            {% endfor %}
-          </div>
-        </form>
-
-        {% else %}
-
-        <!-- CONTROLES JOUEUR 1 (Standard) -->
-        <h3 class="font-bold text-slate-700 mb-4">
-          {% if state.mode == 'pvp' %}À vous, Joueur 1 ! ({{ state.team1.name }}){% else %}Que doit faire votre Pokémon
-          ?{% endif %}
-        </h3>
-        <form action="{% url 'fight' %}" method="post" class="flex flex-col gap-4">
-          {% csrf_token %}
-          <input type="hidden" name="action_type" value="turn">
-
-          <!-- ATTAQUE P1 -->
-          <button type="submit" name="move" value="attack"
-            class="w-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-4 rounded-xl shadow-md transition transform hover:scale-[1.02]">
+            class="w-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-4 rounded-xl">
             🔥 ATTAQUER
           </button>
 
-          <div class="border-t border-slate-200 my-2"></div>
-          <p class="text-sm text-slate-500 font-semibold mb-2">Changer de Pokémon :</p>
+          <p class="text-sm text-slate-500 font-semibold">Changer de Pokémon :</p>
 
-          <!-- SWITCHS P1 -->
-          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          <div class="grid grid-cols-5 gap-2">
             {% for p in state.team1.pokemons %}
-            <button type="submit" name="move" value="switch_{{ forloop.counter0 }}" {% if p.fainted or
-              forloop.counter0==state.team1.active_index %}disabled{% endif %}
-              class="p-2 border-2 rounded-lg text-xs font-bold text-center transition
-                                            {% if p.fainted %}bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed
-                                            {% elif forloop.counter0 == state.team1.active_index %}bg-blue-50 border-blue-500 text-blue-700 ring-2 ring-blue-200
-                                            {% else %}bg-white border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700{% endif %}">
-              {{ p.name }}
-              <div class="h-1 bg-slate-200 rounded-full mt-1 overflow-hidden">
-                <div class="h-full {% if p.fainted %}bg-gray-400{% else %}bg-green-500{% endif %}"
-                  style="width: {% widthratio p.current_hp p.max_hp 100 %}%"></div>
-              </div>
-            </button>
+              {% if p.fainted or forloop.counter0 == state.team1.active_index %}
+                <button type="submit" name="move" value="switch_{{ forloop.counter0 }}" disabled
+                  class="p-2 border-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-400 cursor-not-allowed">
+                  {{ p.name }}
+                </button>
+              {% else %}
+                <button type="submit" name="move" value="switch_{{ forloop.counter0 }}"
+                  class="p-2 border-2 rounded-lg text-xs font-bold bg-white hover:bg-blue-50">
+                  {{ p.name }}
+                </button>
+              {% endif %}
             {% endfor %}
-          </div>
+           </div>
         </form>
-
-        {% endif %}
         {% endif %}
       </div>
 
-      <!-- LOGS -->
-      <div
-        class="bg-slate-900 rounded-2xl shadow-lg p-4 font-mono text-sm text-green-400 overflow-y-auto h-64 border-4 border-slate-700">
-        <div class="flex flex-col-reverse min-h-full justify-end">
-          {% for line in state.log reversed %}
-          <div class="mb-1 border-b border-slate-800 pb-1 last:border-0">{{ line }}</div>
-          {% endfor %}
-        </div>
+      <!-- LOG -->
+      <div class="bg-slate-900 rounded-2xl p-4 font-mono text-green-400 overflow-y-auto h-64">
+        {% for line in state.log|slice:":-1" %}
+        <div>{{ line }}</div>
+        {% endfor %}
       </div>
+
     </div>
   </div>
 
   {% else %}
-  <!-- --- MODE SELECTION --- -->
-  <div class="max-w-xl mx-auto text-center py-10">
-    <h2 class="text-4xl font-extrabold text-slate-800 mb-8">Arène de Combat</h2>
-
-    <div class="bg-white rounded-3xl p-10 shadow-2xl border border-slate-200">
-      <div
-        class="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl">
-        ⚔️
-      </div>
-
-      <h3 class="text-2xl font-bold text-slate-700 mb-6">Mode de jeu</h3>
-
-      <!-- TABS -->
-      <div class="flex justify-center gap-4 mb-8">
-        <button onclick="setMode('pve')" id="btn-pve"
-          class="px-6 py-2 rounded-full font-bold bg-red-600 text-white shadow-lg transition">
-          Solo (PvE)
-        </button>
-        <button onclick="setMode('pvp')" id="btn-pvp"
-          class="px-6 py-2 rounded-full font-bold bg-white text-slate-600 border border-slate-300 shadow-sm transition">
-          Multi Local (PvP)
-        </button>
-      </div>
-
-      {% if teams %}
-
-      <!-- FORM PVE -->
-      <form id="form-pve" action="{% url 'fight' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action_type" value="start">
-        <input type="hidden" name="mode" value="pve">
-
-        <label class="block text-left font-bold text-slate-600 mb-2">Votre Équipe</label>
-        <select name="team_id"
-          class="w-full p-4 text-lg border-2 border-slate-300 rounded-xl mb-8 focus:border-blue-500 focus:ring-blue-500"
-          required>
-          {% for team in teams %}
-          <option value="{{ team.id }}">{{ team.name }} ({{ team.pokemons.count }} Pokémon)</option>
-          {% endfor %}
-        </select>
-
-        <button type="submit"
-          class="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-105 text-xl">
-          COMMENCER LE COMBAT
-        </button>
-      </form>
-
-      <!-- FORM PVP -->
-      <form id="form-pvp" action="{% url 'fight' %}" method="post" class="hidden">
-        {% csrf_token %}
-        <input type="hidden" name="action_type" value="start">
-        <input type="hidden" name="mode" value="pvp">
-
-        <label class="block text-left font-bold text-slate-600 mb-2">Équipe Joueur 1</label>
-        <select name="team1_id"
-          class="w-full p-4 text-lg border-2 border-slate-300 rounded-xl mb-4 focus:border-blue-500 focus:ring-blue-500"
-          required>
-          {% for team in teams %}
-          <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
-
-        <label class="block text-left font-bold text-slate-600 mb-2">Équipe Joueur 2</label>
-        <select name="team2_id"
-          class="w-full p-4 text-lg border-2 border-slate-300 rounded-xl mb-8 focus:border-red-500 focus:ring-red-500"
-          required>
-          {% for team in teams %}
-          <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
-
-        <button type="submit"
-          class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-105 text-xl">
-          LANCER LE DUEL
-        </button>
-      </form>
-
-      <script>
-        function setMode(mode) {
-          const formPve = document.getElementById('form-pve');
-          const formPvp = document.getElementById('form-pvp');
-          const btnPve = document.getElementById('btn-pve');
-          const btnPvp = document.getElementById('btn-pvp');
-
-          if (mode === 'pve') {
-            formPve.classList.remove('hidden');
-            formPvp.classList.add('hidden');
-
-            btnPve.className = "px-6 py-2 rounded-full font-bold bg-red-600 text-white shadow-lg transition";
-            btnPvp.className = "px-6 py-2 rounded-full font-bold bg-white text-slate-600 border border-slate-300 shadow-sm transition";
-          } else {
-            formPve.classList.add('hidden');
-            formPvp.classList.remove('hidden');
-
-            btnPve.className = "px-6 py-2 rounded-full font-bold bg-white text-slate-600 border border-slate-300 shadow-sm transition";
-            btnPvp.className = "px-6 py-2 rounded-full font-bold bg-blue-600 text-white shadow-lg transition";
-          }
-        }
-      </script>
-      {% else %}
-      <p class="text-slate-500 mb-6">Vous devez d'abord créer une équipe pour combattre.</p>
-      <a href="{% url 'team' %}"
-        class="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-blue-700">
-        Créer une équipe
-      </a>
-      {% endif %}
+  <!-- ================= MODE SELECTION ================= -->
+  <div class="max-w-4xl mx-auto py-10">
+    <div class="text-center mb-12">
+      <h2 class="text-5xl font-extrabold text-slate-800 mb-4">Arène de Combat</h2>
+      <p class="text-lg text-slate-500">Préparez vos Pokémons pour la gloire.</p>
     </div>
+
+    <form action="{% url 'fight' %}" method="post" class="space-y-10">
+      {% csrf_token %}
+      <input type="hidden" name="action_type" value="start">
+
+      <!-- MODE SELECTION -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label class="relative cursor-pointer group">
+          <input type="radio" name="mode" value="pve" class="peer sr-only" checked>
+          <div
+            class="p-6 bg-white border-2 border-slate-200 rounded-3xl shadow-sm peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all group-hover:shadow-md">
+            <div class="text-4xl mb-2">🤖</div>
+            <div class="text-xl font-bold text-slate-700">Adventure (PvE)</div>
+            <div class="text-sm text-slate-500 mt-1">Défiez un dresseur contrôlé par l'IA.</div>
+          </div>
+        </label>
+
+        <label class="relative cursor-pointer group">
+          <input type="radio" name="mode" value="pvp" class="peer sr-only">
+          <div
+            class="p-6 bg-white border-2 border-slate-200 rounded-3xl shadow-sm peer-checked:border-red-500 peer-checked:bg-red-50 transition-all group-hover:shadow-md">
+            <div class="text-4xl mb-2">⚔️</div>
+            <div class="text-xl font-bold text-slate-700">Duel Local (PvP)</div>
+            <div class="text-sm text-slate-500 mt-1">Affrontez un ami sur la même machine.</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- TEAM SELECTION -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+        <!-- PLAYER 1 TEAM -->
+        <div>
+          <h3 class="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm">1</span>
+            Équipe Joueur 1
+          </h3>
+          <div class="space-y-3 max-h-[400px] overflow-y-auto p-2">
+            {% for team in teams %}
+            <label class="flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl cursor-pointer hover:border-blue-200 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 shadow-sm">
+              <input type="radio" name="team1_id" value="{{ team.id }}" class="sr-only" required {% if forloop.first %}checked{% endif %}>
+              <div class="flex-1">
+                <div class="font-bold text-slate-800">{{ team.name }}</div>
+                <div class="flex gap-1 mt-1">
+                  {% for p in team.pokemons.all %}
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ p.pokemon_id }}.png" class="w-8 h-8 object-contain" alt="{{ p.name }}">
+                  {% endfor %}
+                </div>
+              </div>
+            </label>
+            {% empty %}
+            <div class="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+              <p class="text-slate-500">Vous n'avez pas encore d'équipe.</p>
+              <a href="{% url 'team' %}" class="text-blue-500 font-bold hover:underline mt-2 inline-block">Créer une équipe</a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- PLAYER 2 TEAM (Only for PvP) -->
+        <div id="p2_selection" class="opacity-50 pointer-events-none grayscale transition-all duration-300">
+          <h3 class="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <span class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm">2</span>
+            Équipe Joueur 2
+          </h3>
+          <div class="space-y-3 max-h-[400px] overflow-y-auto p-2">
+            {% for team in teams %}
+            <label
+              class="flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl cursor-pointer hover:border-red-200 transition-colors has-[:checked]:border-red-500 has-[:checked]:bg-red-50 shadow-sm">
+              <input type="radio" name="team2_id" value="{{ team.id }}" class="sr-only" {% if forloop.counter == 2 %}checked{% endif %}>
+              <div class="flex-1">
+                <div class="font-bold text-slate-800">{{ team.name }}</div>
+                <div class="flex gap-1 mt-1">
+                  {% for p in team.pokemons.all %}
+                  <img
+                    src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ p.pokemon_id }}.png"
+                    class="w-8 h-8 object-contain" alt="{{ p.name }}">
+                  {% endfor %}
+                </div>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          <p class="text-xs text-slate-400 mt-4 italic">* Valide uniquement en mode Duel Local.</p>
+        </div>
+      </div>
+
+      <div class="text-center pt-6">
+        <button type="submit"
+          class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xl font-bold py-5 px-16 rounded-full shadow-xl hover:scale-105 active:scale-95 transition-transform">
+          LANCER LE COMBAT ⚡
+        </button>
+      </div>
+    </form>
   </div>
+
+  <script>
+    // Logic to enable/disable Player 2 selection based on mode
+    const modeRadios = document.querySelectorAll('input[name="mode"]');
+    const p2Section = document.getElementById('p2_selection');
+
+    modeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'pvp') {
+          p2Section.classList.remove('opacity-50', 'pointer-events-none', 'grayscale');
+          p2Section.querySelectorAll('input').forEach(i => i.required = true);
+        } else {
+          p2Section.classList.add('opacity-50', 'pointer-events-none', 'grayscale');
+          p2Section.querySelectorAll('input').forEach(i => i.required = false);
+        }
+      });
+    });
+  </script>
   {% endif %}
 
 </div>
 {% endblock %}
+
