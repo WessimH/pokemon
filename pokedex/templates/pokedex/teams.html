@@ -1,4 +1,35 @@
 {% extends 'pokedex/base.html' %} {% block content %}
+
+<!-- Messages de notification -->
+{% if messages %}
+<div class="fixed bottom-4 right-4 z-50 space-y-2" style="max-width: 400px">
+    {% for message in messages %}
+    <div
+        class="animate-slide-in shadow-lg rounded-lg p-4 border-l-4 {% if message.tags == 'error' %}bg-red-50 border-red-500 text-red-800 {% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-500 text-yellow-800 {% elif message.tags == 'success' %}bg-green-50 border-green-500 text-green-800 {% else %}bg-blue-50 border-blue-500 text-blue-800{% endif %}"
+    >
+        <p class="font-semibold">{{ message }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<style>
+    @keyframes slide-in {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-in {
+        animation: slide-in 0.5s ease-out;
+    }
+</style>
+
 <div class="container mx-auto py-10 px-4">
     <div class="mb-8">
         <h1 class="text-4xl font-extrabold text-slate-800 mb-2">Mes Équipes</h1>
@@ -16,7 +47,7 @@
             {% endfor %}
         </div>
 
-        <!-- renommer l'equipe (compact) -->
+        <!-- renommer l'equipe -->
         <div>
             <form method="post" class="flex gap-2 items-center">
                 {% csrf_token %}
@@ -45,7 +76,7 @@
     <div class="mb-8 bg-white rounded-2xl shadow-lg p-6 border-2 border-slate-200">
         <div class="flex justify-end mb-4">
             {% if team_pokemons.count == 5 %}
-            <div class="bg-green-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
+            <div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
                 {{ team_pokemons.count }}/5
             </div>
             {% else %}

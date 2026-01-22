@@ -1,6 +1,7 @@
 import random
 
 import requests
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
@@ -334,8 +335,12 @@ def team(request):
         if action == "rename":
             new_name = request.POST.get("team_name", "").strip()
             if new_name and len(new_name) <= 100:
+                old_name = selected_team.name
                 selected_team.name = new_name
                 selected_team.save()
+                messages.success(request, f"Équipe renommée : {old_name} -> {new_name}")
+            else:
+                messages.error(request, "Nom d'équipe invalide (1-100 caractères requis).")
             return redirect(f"/teams/?team={selected_team_position}")
         
         # Ajouter un pokemon
@@ -350,15 +355,17 @@ def team(request):
                 
                 # Vérifier que l'équipe n'a pas déjà 5 Pokémon
                 if selected_team.pokemons.count() >= 5:
-                    pass
+                    messages.error(request, f"L'équipe {selected_team.name} est complète !")
                 
                 # Vérifier que le Pokémon est pas déjà dans l'équipe
                 elif selected_team.pokemons.filter(id=pokemon.id).exists():
-                    pass
-
-                selected_team.add_pokemon(pokemon)
+                    messages.warning(request, f"ℹ{pokemon.nickname} est déjà dans cette équipe !")
+                
+                else:
+                    selected_team.add_pokemon(pokemon)
+                    messages.success(request, f"{pokemon.nickname} a été ajouté à l'équipe {selected_team.name} !")
             except PokemonCapture.DoesNotExist:
-                pass
+                messages.error(request, "Ce Pokémon n'existe pas ou ne vous appartient pas.")
             
             return redirect(f"/teams/?team={selected_team_position}")
         
@@ -369,9 +376,10 @@ def team(request):
             try:
                 pokemon = selected_team.pokemons.get(id=pokemon_capture_id)
                 selected_team.pokemons.remove(pokemon)
+                messages.success(request, f"{pokemon.nickname} a été retiré de l'équipe.")
                 
             except PokemonCapture.DoesNotExist:
-                pass
+                messages.error(request, "Impossible de retirer ce Pokémon.")
             
             return redirect(f"/teams/?team={selected_team_position}")
     
