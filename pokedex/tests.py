@@ -44,7 +44,6 @@ class TeamTests(TestCase):
         self.assertIn(self.pokemons[1].id, pokemon_ids)
         self.assertIn(self.pokemons[2].id, pokemon_ids)
 
-
     # Test pour verifier que on peut avoir qu'une équipe par position par joueur
     def test_team_position_unique(self):
         # Créer une équipe à position 0

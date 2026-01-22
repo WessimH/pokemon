@@ -336,8 +336,7 @@ def team(request):
             new_name = request.POST.get("team_name", "").strip()
             if new_name and len(new_name) <= 100:
                 old_name = selected_team.name
-                selected_team.name = new_name
-                selected_team.save()
+                selected_team.rename_team(new_name)
                 messages.success(request, f"Équipe renommée : {old_name} -> {new_name}")
             else:
                 messages.error(request, "Nom d'équipe invalide (1-100 caractères requis).")

@@ -68,6 +68,12 @@ class Team(models.Model):
             raise ValidationError("Une équipe ne peut pas avoir plus de 5 pokémons.")
 
         self.pokemons.add(pokemon)
+
+    def rename_team(self, new_name):
+        self.name = new_name
+        self.full_clean()
+        self.save()
+
     
     class Meta:
         unique_together = ("user", "position")
