@@ -56,7 +56,7 @@
           </div>
           <div class="text-sm font-mono mt-1">{{ p.current_hp }} / {{ p.max_hp }} HP</div>
           <img
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.pokemon_id }}.png"
             class="w-32 h-32 object-contain ml-auto mt-4" alt="{{ p.name }}">
         </div>
         {% endif %}
@@ -69,7 +69,7 @@
         {% if forloop.counter0 == state.team1.active_index %}
         <div class="flex items-end gap-8">
           <img
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.pokemon_id }}.png"
             class="w-48 h-48 object-contain transform -scale-x-100" alt="{{ p.name }}">
           <div class="flex-1">
             <div class="text-2xl font-bold text-slate-700">

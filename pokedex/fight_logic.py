@@ -51,6 +51,7 @@ class FightManager:
             state.append(
                 {
                     "id": p.id,
+                    "pokemon_id": p.pokemon_id,  # ID de l'API pour les sprites
                     "name": p.name,
                     "level": p.level,
                     "max_hp": max_hp,
