@@ -13,9 +13,6 @@ class PokemonCapture(models.Model):
     level = models.IntegerField(default=1)  # Niveau du Pokémon (commence à 1)
     experience = models.IntegerField(default=0)
 
-    # Est-ce qu'il est dans l'équipe active (max 6) ?
-    in_team = models.BooleanField(default=False)
-
     captured_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
