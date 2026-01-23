@@ -231,7 +231,11 @@ def capture_pokemon(request):
             name=clean_name,
             nickname=clean_name,
         )
-    messages.success(request, f"Félicitations ! Vous avez capturé {clean_name} !", extra_tags="capture_pokemon")
+    messages.success(
+        request, 
+        f"Félicitations ! Vous avez capturé {clean_name} !", 
+        extra_tags="capture_pokemon"
+    )
 
     return redirect(request.META.get("HTTP_REFERER", "index"))
 
@@ -396,14 +400,22 @@ def team(request):
             if new_name and len(new_name) <= 100:
                 old_name = selected_team.name
                 selected_team.rename_team(new_name)
-                messages.success(request, f"Équipe renommée : {old_name} -> {new_name}", extra_tags="modification_success")
+                messages.success(
+                    request, 
+                    f"Équipe renommée : {old_name} -> {new_name}", 
+                    extra_tags="modification_success"
+                )
             else:
-                messages.error(request, "Nom d'équipe invalide (1-100 caractères requis).", extra_tags="modification_error")
+                messages.error(
+                    request, 
+                    "Nom d'équipe invalide (1-100 caractères requis).", 
+                    extra_tags="modification_error"
+                )
             return redirect(f"/teams/?team={selected_team_position}")
         
         # Ajouter un pokemon
         elif action == "add_pokemon":
-            pokemon_capture_id = request.POST.get("pokemon_id") # Id BDD pas num de pokemon 
+            pokemon_capture_id = request.POST.get("pokemon_id")
             
             try:
                 pokemon = PokemonCapture.objects.get(
@@ -413,17 +425,33 @@ def team(request):
                 
                 # Vérifier que l'équipe n'a pas déjà 5 Pokémon
                 if selected_team.pokemons.count() >= 5:
-                    messages.error(request, f"{selected_team.name} a déjà 5 Pokémons", extra_tags="add_in_full_team")
+                    messages.error(
+                        request, 
+                        f"{selected_team.name} a déjà 5 Pokémons", 
+                        extra_tags="add_in_full_team"
+                    )
                 
                 # Vérifier que le Pokémon est pas déjà dans l'équipe
                 elif selected_team.pokemons.filter(id=pokemon.id).exists():
-                    messages.warning(request, f"ℹ{pokemon.nickname} est déjà dans cette équipe !", extra_tags="modification_error")
+                    messages.warning(
+                        request, 
+                        f"ℹ{pokemon.nickname} est déjà dans cette équipe !", 
+                        extra_tags="modification_error"
+                    )
                 
                 else:
                     selected_team.add_pokemon(pokemon)
-                    messages.success(request, f"{pokemon.nickname} a rejoint {selected_team.name} !", extra_tags="add_in_team")
+                    messages.success(
+                        request, 
+                        f"{pokemon.nickname} a rejoint {selected_team.name} !", 
+                        extra_tags="add_in_team"
+                    )
             except PokemonCapture.DoesNotExist:
-                messages.error(request, "Ce Pokémon n'existe pas ou ne vous appartient pas.", extra_tags="modification_error")
+                messages.error(
+                    request, 
+                    "Ce Pokémon n'existe pas ou ne vous appartient pas.", 
+                    extra_tags="modification_error"
+                )
             
             return redirect(f"/teams/?team={selected_team_position}")
         
@@ -434,10 +462,18 @@ def team(request):
             try:
                 pokemon = selected_team.pokemons.get(id=pokemon_capture_id)
                 selected_team.pokemons.remove(pokemon)
-                messages.success(request, f"{pokemon.nickname} a quitté l'équipe.", extra_tags="remove_from_team")
+                messages.success(
+                    request, 
+                    f"{pokemon.nickname} a quitté l'équipe.", 
+                    extra_tags="remove_from_team"
+                ) 
                 
             except PokemonCapture.DoesNotExist:
-                messages.error(request, "Impossible de retirer ce Pokémon.", extra_tags="modification_error")
+                messages.error(
+                    request, 
+                    "Impossible de retirer ce Pokémon.", 
+                    extra_tags="modification_error"
+                )
             
             return redirect(f"/teams/?team={selected_team_position}")
     
@@ -476,19 +512,31 @@ def fight(request):
 
             # Vérifier que team1_id existe
             if not team1_id:
-                messages.warning(request, "Veuillez sélectionner une équipe complète pour le Joueur 1.", extra_tags="impossible_battle")
+                messages.warning(
+                    request, 
+                    "Veuillez sélectionner une équipe complète pour le Joueur 1.", 
+                    extra_tags="impossible_battle"
+                )
                 return redirect("fight")
 
             # Team 1 (Toujours celle du joueur)
             try:
                 t1 = Team.objects.get(id=team1_id, user=request.user)
             except Team.DoesNotExist:
-                messages.error(request, "Équipe introuvable.", extra_tags="impossible_battle")
+                messages.error(
+                    request, 
+                    "Équipe introuvable.", 
+                    extra_tags="impossible_battle"
+                )
                 return redirect("fight")
             
             # l'équipe doit avoir exactement 5 Pokémons
             if not t1.is_ready_for_battle():
-                messages.error(request, f"'{t1.name}' n'a pas assez de Pokemons pour combattre.", extra_tags="impossible_battle")
+                messages.error(
+                    request, 
+                    f"'{t1.name}' n'a pas assez de Pokemons pour combattre.", 
+                    extra_tags="impossible_battle"
+                )
                 return redirect("fight")
 
             if mode == "pvp":
@@ -496,7 +544,11 @@ def fight(request):
                 
                 # Vérifier que team2_id existe
                 if not team2_id:
-                    messages.warning(request, "Veuillez sélectionner une équipe complète pour le Joueur 2.", extra_tags="impossible_battle")
+                    messages.warning(
+                        request, 
+                        "Veuillez sélectionner une équipe complète pour le Joueur 2.", 
+                        extra_tags="impossible_battle"
+                    )
                     return redirect("fight")
                 
                 # Pour le multi local, on autorise de prendre une autre équipe
@@ -505,12 +557,20 @@ def fight(request):
                 try:
                     t2 = Team.objects.get(id=team2_id)
                 except Team.DoesNotExist:
-                    messages.error(request, "Équipe 2 introuvable.", extra_tags="impossible_battle")
+                    messages.error(
+                        request, 
+                        "Équipe 2 introuvable.", 
+                        extra_tags="impossible_battle"
+                    )
                     return redirect("fight")
                 
                 # L'équipe 2 doit aussi avoir exactement 5 Pokémons
                 if not t2.is_ready_for_battle():
-                    messages.error(request, f"'{t2.name}' n'a pas assez de Pokemons pour combattre.", extra_tags="impossible_battle")
+                    messages.error(
+                        request, 
+                        f"'{t2.name}' n'a pas assez de Pokemons pour combattre.", 
+                        extra_tags="impossible_battle"
+                    )
                     return redirect("fight")
 
                 manager = FightManager(t1, t2, mode="pvp")

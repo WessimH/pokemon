@@ -13,6 +13,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='team',
             name='position',
-            field=models.IntegerField(choices=[(0, 'Équipe 1'), (1, 'Équipe 2'), (2, 'Équipe 3'), (3, 'Équipe 4'), (4, 'Équipe 5')], default=0),
+            field=models.IntegerField(choices=[
+                (0, 'Équipe 1'), 
+                (1, 'Équipe 2'), 
+                (2, 'Équipe 3'), 
+                (3, 'Équipe 4'), 
+                (4, 'Équipe 5')
+            ], default=0),
         ),
     ]

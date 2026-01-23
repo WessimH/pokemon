@@ -1,6 +1,6 @@
+from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
-from django import forms
 
 from .models import PokemonCapture, Team
 
@@ -14,7 +14,8 @@ class PokemonCaptureAdmin(admin.ModelAdmin):
     search_fields = ("name", "user__username")
 
 
-# Formulaire personnalisé pour empêcher les admins de mettre plus de 5 Pokémons dans une équipe
+# Formulaire personnalisé pour empêcher les admins de mettre 
+# plus de 5 Pokémons dans une équipe
 # Cette validation est obligée car le modèle Team.clean() n'est pas appelé
 class TeamAdminForm(forms.ModelForm): 
     # on se base sur le form de classique 
@@ -36,7 +37,12 @@ class TeamAdminForm(forms.ModelForm):
             if user:
                 for pokemon in pokemons:
                     if pokemon.user != user:
-                        raise ValidationError(f"Le Pokémon '{pokemon.name}' n'appartient pas à {user.username}.")
+                        raise ValidationError(
+                            (
+                                f"Le Pokémon '{pokemon.name}' "
+                                f"n'appartient pas à {user.username}."
+                            )
+                        )
         
         return pokemons
 

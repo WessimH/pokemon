@@ -76,10 +76,13 @@ class Team(models.Model):
     
     def clean(self):
         super().clean()
-        # /!\ Pour un ManyToMany, cette validation est limitée car les Pokémon peuvent être ajoutés après la création de l'équipe.
+        # /!\ Pour un ManyToMany, cette validation est limitée car 
+        # les Pokémon peuvent être ajoutés après la création de l'équipe.
         if self.pk:  # Vérifier seulement si l'équipe existe déjà
             if self.pokemons.count() > 5:
-                raise ValidationError({"pokemons": "Une équipe ne peut pas avoir plus de 5 Pokémon."})
+                raise ValidationError(
+                    {"pokemons": "Une équipe ne peut pas avoir plus de 5 Pokémon."}
+                )
 
     
     class Meta:

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 
 from .fight_logic import FightManager
 from .models import PokemonCapture, Team
@@ -108,9 +108,9 @@ class TeamTests(TestCase):
     # Test de l'ordre de Meta
     def test_team_ordering(self):
         # Créer des équipes dans le désordre
-        team2 = Team.objects.create(user=self.user, name="Team 2", position=2)
-        team0 = Team.objects.create(user=self.user, name="Team 0", position=0)
-        team1 = Team.objects.create(user=self.user, name="Team 1", position=1)
+        Team.objects.create(user=self.user, name="Team 2", position=2)
+        Team.objects.create(user=self.user, name="Team 0", position=0)
+        Team.objects.create(user=self.user, name="Team 1", position=1)
         
         teams = list(Team.objects.filter(user=self.user))
         
