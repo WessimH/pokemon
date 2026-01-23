@@ -25,13 +25,24 @@ class TeamAdminForm(forms.ModelForm):
     # on ajoute le check sur le champ pokemon
     def clean_pokemons(self):
         pokemons = self.cleaned_data.get('pokemons')
-        if pokemons and pokemons.count() > 5:
-            raise ValidationError("Une équipe ne peut pas avoir plus de 5 Pokémon.")
+        user = self.cleaned_data.get('user')
+        
+        if pokemons:
+            # Max 5 Pokémon
+            if pokemons.count() > 5:
+                raise ValidationError("Une équipe ne peut pas avoir plus de 5 Pokémon.")
+            
+            # Tous les Pokémon sont à l'utilisateur
+            if user:
+                for pokemon in pokemons:
+                    if pokemon.user != user:
+                        raise ValidationError(f"Le Pokémon '{pokemon.name}' n'appartient pas à {user.username}.")
+        
         return pokemons
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    form = TeamAdminForm  # Formulaire qui empêche la sauvegarde de + 5 pokemons
+    form = TeamAdminForm  # Formulaire qui surveille l'ajout de pokemons
     list_display = ("name", "user", "position", "pokemon_count", "is_complete")
     list_filter = ("user", "position")
     search_fields = ("name", "user__username")
