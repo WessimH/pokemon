@@ -53,6 +53,7 @@ class FightManager:
                     "id": p.id,
                     "pokemon_id": p.pokemon_id,  # ID de l'API pour les sprites
                     "name": p.name,
+                    "nickname": p.nickname if p.nickname else p.name,
                     "level": p.level,
                     "max_hp": max_hp,
                     "current_hp": max_hp,
@@ -104,7 +105,7 @@ class FightManager:
                 self.active_p1 = idx
                 self.log.append(
                     f"{self.team1.user.username} envoie "
-                    f"{self.team1_state[idx]['name']} !"
+                    f"{self.team1_state[idx]['nickname']} !"
                 )
             else:
                 self.log.append(f"Switch impossible vers {idx}.")
@@ -118,7 +119,7 @@ class FightManager:
                 for i, p in enumerate(self.team2_state):
                     if not p["fainted"]:
                         self.active_p2 = i
-                        self.log.append(f"L'adversaire envoie {p['name']} !")
+                        self.log.append(f"L'adversaire envoie {p['nickname']} !")
                         found = True
                         break
                 if not found:
@@ -136,7 +137,7 @@ class FightManager:
                     self.active_p2 = idx
                     self.log.append(
                         f"{self.team2.user.username} envoie "
-                        f"{self.team2_state[idx]['name']} !"
+                        f"{self.team2_state[idx]['nickname']} !"
                     )
                 else:
                     self.log.append(f"Switch inv. P2 vers {idx}.")
@@ -154,12 +155,12 @@ class FightManager:
             dmg = self._calculate_damage(p1_poke, p2_poke)
             p2_poke["current_hp"] = max(0, p2_poke["current_hp"] - dmg)
             self.log.append(
-                f"{p1_poke['name']} attaque ! {dmg} dégâts à {p2_poke['name']}."
+                f"{p1_poke['nickname']} attaque ! {dmg} dégâts à {p2_poke['nickname']}."
             )
 
             if p2_poke["current_hp"] == 0:
                 p2_poke["fainted"] = True
-                self.log.append(f"{p2_poke['name']} est KO !")
+                self.log.append(f"{p2_poke['nickname']} est KO !")
                 # Check victoire immédiate P1
                 if all(p["fainted"] for p in self.team2_state):
                     self.winner = "team1"
@@ -177,12 +178,12 @@ class FightManager:
             dmg = self._calculate_damage(p2_poke, p1_poke)
             p1_poke["current_hp"] = max(0, p1_poke["current_hp"] - dmg)
             self.log.append(
-                f"{p2_poke['name']} attaque ! {dmg} dégâts à {p1_poke['name']}."
+                f"{p2_poke['nickname']} attaque ! {dmg} dégâts à {p1_poke['nickname']}."
             )
 
             if p1_poke["current_hp"] == 0:
                 p1_poke["fainted"] = True
-                self.log.append(f"{p1_poke['name']} est KO !")
+                self.log.append(f"{p1_poke['nickname']} est KO !")
 
                 # Check victoire P2
                 if all(p["fainted"] for p in self.team1_state):
