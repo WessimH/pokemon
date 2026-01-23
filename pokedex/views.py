@@ -510,7 +510,7 @@ def fight(request):
                 
                 # L'équipe 2 doit aussi avoir exactement 5 Pokémons
                 if not t2.is_ready_for_battle():
-                    messages.error(request, f"L'{t2.name}'n'a pas assez de Pokemons pour combattre.", extra_tags="impossible_battle")
+                    messages.error(request, f"'{t2.name}' n'a pas assez de Pokemons pour combattre.", extra_tags="impossible_battle")
                     return redirect("fight")
 
                 manager = FightManager(t1, t2, mode="pvp")
