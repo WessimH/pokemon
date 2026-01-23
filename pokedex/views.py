@@ -474,23 +474,55 @@ def fight(request):
             mode = request.POST.get("mode", "pve")
             team1_id = request.POST.get("team1_id")
 
+            # Vérifier que team1_id existe
+            if not team1_id:
+                messages.warning(request, "Veuillez sélectionner une équipe complète pour le Joueur 1.", extra_tags="impossible_battle")
+                return redirect("fight")
+
             # Team 1 (Toujours celle du joueur)
-            t1 = get_object_or_404(Team, id=team1_id, user=request.user)
+            try:
+                t1 = Team.objects.get(id=team1_id, user=request.user)
+            except Team.DoesNotExist:
+                messages.error(request, "Équipe introuvable.", extra_tags="impossible_battle")
+                return redirect("fight")
+            
+            # l'équipe doit avoir exactement 5 Pokémons
+            if not t1.is_ready_for_battle():
+                messages.error(request, f"'{t1.name}' n'a pas assez de Pokemons pour combattre.", extra_tags="impossible_battle")
+                return redirect("fight")
 
             if mode == "pvp":
                 team2_id = request.POST.get("team2_id")
+                
+                # Vérifier que team2_id existe
+                if not team2_id:
+                    messages.warning(request, "Veuillez sélectionner une équipe complète pour le Joueur 2.", extra_tags="impossible_battle")
+                    return redirect("fight")
+                
                 # Pour le multi local, on autorise de prendre une autre équipe
                 # du même user ou une équipe d'un autre (si on veut).
                 # Restons sur user teams pour simplifier l'UI.
-                t2 = get_object_or_404(Team, id=team2_id)
+                try:
+                    t2 = Team.objects.get(id=team2_id)
+                except Team.DoesNotExist:
+                    messages.error(request, "Équipe 2 introuvable.", extra_tags="impossible_battle")
+                    return redirect("fight")
+                
+                # L'équipe 2 doit aussi avoir exactement 5 Pokémons
+                if not t2.is_ready_for_battle():
+                    messages.error(request, f"L'{t2.name}'n'a pas assez de Pokemons pour combattre.", extra_tags="impossible_battle")
+                    return redirect("fight")
 
                 manager = FightManager(t1, t2, mode="pvp")
                 request.session["fight_input_phase"] = "p1"  # P1 commence
             else:
                 # PVE: Adversaire aléatoire
                 others = Team.objects.exclude(id=team1_id)
-                if others.exists():
-                    t2 = random.choice(list(others))
+                # Filtrer uniquement les équipes prêtes pour le combat
+                ready_teams = [team for team in others if team.is_ready_for_battle()]
+                
+                if ready_teams:
+                    t2 = random.choice(ready_teams)
                 else:
                     t2 = t1  # Mirror match fallback
 

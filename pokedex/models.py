@@ -74,6 +74,9 @@ class Team(models.Model):
         self.full_clean()
         self.save()
 
+    def is_ready_for_battle(self):
+        return self.pokemons.count() == 5
+
     
     class Meta:
         unique_together = ("user", "position")
