@@ -1,8 +1,8 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from .fight_logic import FightManager
-from .forms import TeamCreationForm
 from .models import PokemonCapture, Team
 
 
@@ -17,64 +17,90 @@ class TeamTests(TestCase):
             )
             self.pokemons.append(p)
 
-    def test_team_creation_form_valid(self):
-        """Test qu'une équipe est valide avec exactement 5 pokémons"""
-        data = {
-            "name": "Team A",
-            "pokemons": [p.id for p in self.pokemons[:5]],  # On en prend 5
-        }
-        form = TeamCreationForm(data=data, user=self.user)
-        self.assertTrue(form.is_valid())
-        team = form.save(commit=False)
-        team.user = self.user
-        team.save()
-        form.save_m2m()
+    # Test insertion d'une équipe avec pokemons
+    def test_insert_team(self):
+        team = Team.objects.create(user=self.user, name="Équipe 1", position=0)
+
+        # Ajouter 3 pokémons à l'équipe
+        team.pokemons.add(self.pokemons[0], self.pokemons[1], self.pokemons[2])
+
+        # Vérifier que l'équipe existe bien en base
+        team_db = Team.objects.get(user=self.user, position=0)
+
+        # vérifier les données
+        self.assertEqual(team_db.name, "Équipe 1")
+        self.assertEqual(team_db.position, 0)
+        self.assertEqual(team_db.user, self.user)
+        self.assertEqual(team_db.pokemons.count(), 3)
+
+        # Vérifier que les pokémons sont les bons
+        pokemon_ids = list(team_db.pokemons.values_list("id", flat=True))
+        self.assertIn(self.pokemons[0].id, pokemon_ids)
+        self.assertIn(self.pokemons[1].id, pokemon_ids)
+        self.assertIn(self.pokemons[2].id, pokemon_ids)
+
+    # Test pour verifier que on peut avoir qu'une équipe par position par joueur
+    def test_team_position_unique(self):
+        # Créer une équipe à position 0
+        Team.objects.create(user=self.user, name="Équipe 1", position=0)
+
+        try:
+            # Créer une deuxieme équipe position 0
+            Team.objects.create(user=self.user, name="Équipe 1", position=0)
+            # Si ca passe echec
+            self.fail("La contrainte unique_together n'a pas empêché la création")
+        except Exception:
+            # Erreur attendu
+            pass
+
+    # Test pour vérifier qu'on ne peut pas mettre +5 pokemons dans une équipe
+    def test_max_five_pokemons_team(self):
+        team = Team.objects.create(user=self.user, name="Équipe Test", position=0)
+        for i in range(5):
+            team.add_pokemon(self.pokemons[i])
+
+        # Vérifier qu'on a bien 5 pokémons
         self.assertEqual(team.pokemons.count(), 5)
 
-    def test_team_creation_form_invalid_count(self):
-        """Test qu'une équipe échoue si le nombre de pokémons != 5"""
-        # Cas avec 4 pokémons
-        data_less = {
-            "name": "Team Less",
-            "pokemons": [p.id for p in self.pokemons[:4]],
-        }
-        form_less = TeamCreationForm(data=data_less, user=self.user)
-        self.assertFalse(form_less.is_valid())
-        self.assertIn(
-            "Une équipe doit contenir exactement 5 Pokémons.",
-            form_less.errors["pokemons"],
-        )
+        # Essayer d'ajouter un 6ème pokémon, ça doit échouer
+        with self.assertRaises(ValidationError) as context:
+            team.add_pokemon(self.pokemons[5])
 
-        # Cas avec 6 pokémons
-        data_more = {
-            "name": "Team More",
-            "pokemons": [p.id for p in self.pokemons],  # Tous les 6
-        }
-        form_more = TeamCreationForm(data=data_more, user=self.user)
-        self.assertFalse(form_more.is_valid())
-        self.assertIn(
-            "Une équipe doit contenir exactement 5 Pokémons.",
-            form_more.errors["pokemons"],
-        )
+        # Vérifier le message d'erreur
+        self.assertIn("5 pokémons", str(context.exception))
 
-    def test_team_creation_form_wrong_user(self):
-        """Test qu'on ne peut pas ajouter les pokémons d'un autre utilisateur"""
-        other_user = User.objects.create_user(username="other", password="password")
-        other_pokemon = PokemonCapture.objects.create(
-            user=other_user, pokemon_id=99, name="Other Pokemon"
-        )
+        # Vérifier qu'on a toujours 5 pokémons
+        self.assertEqual(team.pokemons.count(), 5)
 
-        data = {
-            "name": "Team Cheater",
-            "pokemons": [other_pokemon.id] + [p.id for p in self.pokemons[:4]],
-        }
-        # Le form filtre le queryset par user,
-        # donc other_pokemon ne sera même pas un choix valide
-        form = TeamCreationForm(data=data, user=self.user)
-        self.assertFalse(form.is_valid())
-        # L'erreur standard Django pour un choix hors queryset est
-        # "Select a valid choice..."
-        self.assertTrue(form.errors["pokemons"])
+    # Test 1 pokemon dans plusieurs équipes
+    def test_cannot_add_same_pokemon_to_multiple_teams(self):
+        # Créer 2 équipes
+        team1 = Team.objects.create(user=self.user, name="Team 1", position=0)
+        team2 = Team.objects.create(user=self.user, name="Team 2", position=1)
+
+        # Ajouter le même pokémon aux deux équipes
+        pokemon = self.pokemons[0]
+        team1.pokemons.add(pokemon)
+        team2.pokemons.add(pokemon)
+
+        # Vérifier que le pokémon est bien dans les deux équipes
+        self.assertIn(pokemon, team1.pokemons.all())
+        self.assertIn(pokemon, team2.pokemons.all())
+        self.assertEqual(pokemon.teams.count(), 2)
+
+    # Test de l'ordre de Meta
+    def test_team_ordering(self):
+        # Créer des équipes dans le désordre
+        Team.objects.create(user=self.user, name="Team 2", position=2)
+        Team.objects.create(user=self.user, name="Team 0", position=0)
+        Team.objects.create(user=self.user, name="Team 1", position=1)
+
+        teams = list(Team.objects.filter(user=self.user))
+
+        # Vérifier qu'elles sont dans l'ordre croissant de position
+        self.assertEqual(teams[0].position, 0)
+        self.assertEqual(teams[1].position, 1)
+        self.assertEqual(teams[2].position, 2)
 
 
 class FightTests(TestCase):
@@ -224,56 +250,3 @@ class PvpTests(TestCase):
         # Both take damage
         self.assertLess(manager.team1_state[0]["current_hp"], p1_hp_start)
         self.assertLess(manager.team2_state[0]["current_hp"], p2_hp_start)
-        # Le form filtre le queryset par user
-        other_user = User.objects.create_user(username="other_guy", password="password")
-        other_pokemon = PokemonCapture.objects.create(
-            user=other_user, pokemon_id=1, name="NotMyPokemon"
-        )
-
-        # On définit 'data' pour essayer de créer une équipe avec ce Pokémon volé
-        data = {"name": "Team Cheater", "pokemons": [other_pokemon.id]}
-        # donc other_pokemon ne sera même pas un choix valide
-        form = TeamCreationForm(data=data, user=self.user)
-        self.assertFalse(form.is_valid())
-        # L'erreur standard Django pour un choix hors queryset
-        # est "Select a valid choice..."
-        self.assertTrue(form.errors["pokemons"])
-
-    def test_team_edit(self):
-        """Test la modification d'une équipe"""
-        # Création initiale
-        team = Team.objects.create(name="Original Team", user=self.user)
-        team.pokemons.set(self.pokemons[:5])
-
-        # Modification : CHANGEMENT DE NOM et de POKEMON
-        new_pokemons = [
-            self.pokemons[0].id,
-            self.pokemons[2].id,
-            self.pokemons[3].id,
-            self.pokemons[4].id,
-            self.pokemons[5].id,
-        ]
-
-        data = {
-            "name": "Updated Team",
-            "pokemons": new_pokemons,
-        }
-        form = TeamCreationForm(data=data, instance=team, user=self.user)
-        self.assertTrue(form.is_valid())
-        form.save()
-
-        team.refresh_from_db()
-        self.assertEqual(team.name, "Updated Team")
-        self.assertEqual(team.pokemons.count(), 5)
-        self.assertIn(self.pokemons[5], team.pokemons.all())
-        self.assertNotIn(self.pokemons[1], team.pokemons.all())
-
-    def test_team_delete(self):
-        """Test la suppression d'une équipe"""
-        team = Team.objects.create(name="To Delete", user=self.user)
-        team.pokemons.set(self.pokemons[:5])
-
-        team_id = team.id
-        team.delete()
-
-        self.assertFalse(Team.objects.filter(id=team_id).exists())

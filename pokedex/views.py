@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from .fight_logic import FightManager
-from .forms import ProfileEditForm, TeamCreationForm
+from .forms import ProfileEditForm
 from .models import PokemonCapture, Team
 from .utils import ENGLISH_TO_FRENCH, FRENCH_TO_ENGLISH, TYPE_TRANSLATIONS
 
@@ -202,6 +202,17 @@ class SignUpView(generic.CreateView):
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
+    # On créé l'utilisateur puis ses 5 équipes
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        for position in range(5):
+            Team.objects.create(
+                user=self.object, name=f"Équipe {position + 1}", position=position
+            )
+
+        return response
+
 
 # --- VUE CAPTURE POKÉMON (PAGE INDEX et POKEMON) ---
 @login_required
@@ -218,7 +229,11 @@ def capture_pokemon(request):
             name=clean_name,
             nickname=clean_name,
         )
-    messages.success(request, f"Félicitations ! Vous avez capturé {clean_name} !")
+    messages.success(
+        request,
+        f"Félicitations ! Vous avez capturé {clean_name} !",
+        extra_tags="capture_pokemon",
+    )
 
     return redirect(request.META.get("HTTP_REFERER", "index"))
 
@@ -367,48 +382,115 @@ def edit_profile(request):
 # --- VUE EQUIPES (PAGE TEAMS) ---
 @login_required
 def team(request):
-    user_teams = Team.objects.filter(user=request.user)
+    user_teams = Team.objects.filter(user=request.user).order_by("position")
 
+    # On affiche la premiere équipe par défaut
+    selected_team_position = int(request.GET.get("team", 0))
+    selected_team = user_teams.get(position=selected_team_position)
+
+    # Actions de modification
     if request.method == "POST":
-        form = TeamCreationForm(request.POST, user=request.user)
-        if form.is_valid():
-            new_team = form.save(commit=False)
-            new_team.user = request.user
-            new_team.save()
-            # method save_m2m is required for ManyToManyField with commit=False
-            form.save_m2m()
-            return redirect("team")
-    else:
-        form = TeamCreationForm(user=request.user)
+        action = request.POST.get("action")
 
-    return render(request, "pokedex/teams.html", {"teams": user_teams, "form": form})
+        # Renommer une équipe
+        if action == "rename":
+            new_name = request.POST.get("team_name", "").strip()
+            if new_name and len(new_name) <= 100:
+                old_name = selected_team.name
+                selected_team.rename_team(new_name)
+                messages.success(
+                    request,
+                    f"Équipe renommée : {old_name} -> {new_name}",
+                    extra_tags="modification_success",
+                )
+            else:
+                messages.error(
+                    request,
+                    "Nom d'équipe invalide (1-100 caractères requis).",
+                    extra_tags="modification_error",
+                )
+            return redirect(f"/teams/?team={selected_team_position}")
 
+        # Ajouter un pokemon
+        elif action == "add_pokemon":
+            pokemon_capture_id = request.POST.get("pokemon_id")
 
-# --- VUE EDITION EQUIPE (PAGE TEAM_EDIT) ---
-@login_required
-def team_edit(request, team_id):
-    team = get_object_or_404(Team, id=team_id, user=request.user)
+            try:
+                pokemon = PokemonCapture.objects.get(
+                    id=pokemon_capture_id, user=request.user
+                )
 
-    if request.method == "POST":
-        form = TeamCreationForm(request.POST, instance=team, user=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect("team")
-    else:
-        form = TeamCreationForm(instance=team, user=request.user)
+                # Vérifier que l'équipe n'a pas déjà 5 Pokémon
+                if selected_team.pokemons.count() >= 5:
+                    messages.error(
+                        request,
+                        f"{selected_team.name} a déjà 5 Pokémons",
+                        extra_tags="add_in_full_team",
+                    )
 
-    return render(request, "pokedex/team_edit.html", {"form": form, "team": team})
+                # Vérifier que le Pokémon est pas déjà dans l'équipe
+                elif selected_team.pokemons.filter(id=pokemon.id).exists():
+                    messages.warning(
+                        request,
+                        f"ℹ{pokemon.nickname} est déjà dans cette équipe !",
+                        extra_tags="modification_error",
+                    )
 
+                else:
+                    selected_team.add_pokemon(pokemon)
+                    messages.success(
+                        request,
+                        f"{pokemon.nickname} a rejoint {selected_team.name} !",
+                        extra_tags="add_in_team",
+                    )
+            except PokemonCapture.DoesNotExist:
+                messages.error(
+                    request,
+                    "Ce Pokémon n'existe pas ou ne vous appartient pas.",
+                    extra_tags="modification_error",
+                )
 
-# --- VUE SUPPRESSION EQUIPE (ACTION DELETE) ---
-@login_required
-def team_delete(request, team_id):
-    team = get_object_or_404(Team, id=team_id, user=request.user)
+            return redirect(f"/teams/?team={selected_team_position}")
 
-    if request.method == "POST":
-        team.delete()
+        # supprimer un pokemon de l'équipe
+        elif action == "remove_pokemon":
+            pokemon_capture_id = request.POST.get("pokemon_id")
 
-    return redirect("team")
+            try:
+                pokemon = selected_team.pokemons.get(id=pokemon_capture_id)
+                selected_team.pokemons.remove(pokemon)
+                messages.success(
+                    request,
+                    f"{pokemon.nickname} a quitté l'équipe.",
+                    extra_tags="remove_from_team",
+                )
+
+            except PokemonCapture.DoesNotExist:
+                messages.error(
+                    request,
+                    "Impossible de retirer ce Pokémon.",
+                    extra_tags="modification_error",
+                )
+
+            return redirect(f"/teams/?team={selected_team_position}")
+
+    # Récupérer les pokémon de l'équipe sélectionnée
+    team_pokemons = selected_team.pokemons.all()
+
+    # Récupérer les autres
+    available_pokemons = PokemonCapture.objects.filter(user=request.user).exclude(
+        teams=selected_team
+    )
+
+    context = {
+        "teams": user_teams,
+        "selected_team": selected_team,
+        "selected_team_position": selected_team_position,
+        "team_pokemons": team_pokemons,
+        "available_pokemons": available_pokemons,
+    }
+
+    return render(request, "pokedex/teams.html", context)
 
 
 # --- VUE COMBATS (PAGE FIGHTS) ---
@@ -423,23 +505,75 @@ def fight(request):
             mode = request.POST.get("mode", "pve")
             team1_id = request.POST.get("team1_id")
 
+            # Vérifier que team1_id existe
+            if not team1_id:
+                messages.warning(
+                    request,
+                    "Veuillez sélectionner une équipe complète pour le Joueur 1.",
+                    extra_tags="impossible_battle",
+                )
+                return redirect("fight")
+
             # Team 1 (Toujours celle du joueur)
-            t1 = get_object_or_404(Team, id=team1_id, user=request.user)
+            try:
+                t1 = Team.objects.get(id=team1_id, user=request.user)
+            except Team.DoesNotExist:
+                messages.error(
+                    request, "Équipe introuvable.", extra_tags="impossible_battle"
+                )
+                return redirect("fight")
+
+            # l'équipe doit avoir exactement 5 Pokémons
+            if not t1.is_ready_for_battle():
+                messages.error(
+                    request,
+                    f"'{t1.name}' n'a pas assez de Pokemons pour combattre.",
+                    extra_tags="impossible_battle",
+                )
+                return redirect("fight")
 
             if mode == "pvp":
                 team2_id = request.POST.get("team2_id")
+
+                # Vérifier que team2_id existe
+                if not team2_id:
+                    messages.warning(
+                        request,
+                        "Veuillez sélectionner une équipe complète pour le Joueur 2.",
+                        extra_tags="impossible_battle",
+                    )
+                    return redirect("fight")
+
                 # Pour le multi local, on autorise de prendre une autre équipe
                 # du même user ou une équipe d'un autre (si on veut).
                 # Restons sur user teams pour simplifier l'UI.
-                t2 = get_object_or_404(Team, id=team2_id)
+                try:
+                    t2 = Team.objects.get(id=team2_id)
+                except Team.DoesNotExist:
+                    messages.error(
+                        request, "Équipe 2 introuvable.", extra_tags="impossible_battle"
+                    )
+                    return redirect("fight")
+
+                # L'équipe 2 doit aussi avoir exactement 5 Pokémons
+                if not t2.is_ready_for_battle():
+                    messages.error(
+                        request,
+                        f"'{t2.name}' n'a pas assez de Pokemons pour combattre.",
+                        extra_tags="impossible_battle",
+                    )
+                    return redirect("fight")
 
                 manager = FightManager(t1, t2, mode="pvp")
                 request.session["fight_input_phase"] = "p1"  # P1 commence
             else:
                 # PVE: Adversaire aléatoire
                 others = Team.objects.exclude(id=team1_id)
-                if others.exists():
-                    t2 = random.choice(list(others))
+                # Filtrer uniquement les équipes prêtes pour le combat
+                ready_teams = [team for team in others if team.is_ready_for_battle()]
+
+                if ready_teams:
+                    t2 = random.choice(ready_teams)
                 else:
                     t2 = t1  # Mirror match fallback
 

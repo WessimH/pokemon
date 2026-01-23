@@ -56,7 +56,7 @@
           </div>
           <div class="text-sm font-mono mt-1">{{ p.current_hp }} / {{ p.max_hp }} HP</div>
           <img
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.pokemon_id }}.png"
             class="w-32 h-32 object-contain ml-auto mt-4" alt="{{ p.name }}">
         </div>
         {% endif %}
@@ -69,7 +69,7 @@
         {% if forloop.counter0 == state.team1.active_index %}
         <div class="flex items-end gap-8">
           <img
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.id }}.png"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{{ p.pokemon_id }}.png"
             class="w-48 h-48 object-contain transform -scale-x-100" alt="{{ p.name }}">
           <div class="flex-1">
             <div class="text-2xl font-bold text-slate-700">
@@ -190,16 +190,29 @@
           </h3>
           <div class="space-y-3 max-h-[400px] overflow-y-auto p-2">
             {% for team in teams %}
-            <label class="flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl cursor-pointer hover:border-blue-200 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 shadow-sm">
-              <input type="radio" name="team1_id" value="{{ team.id }}" class="sr-only" required {% if forloop.first %}checked{% endif %}>
-              <div class="flex-1">
-                <div class="font-bold text-slate-800">{{ team.name }}</div>
-                <div class="flex gap-1 mt-1">
-                  {% for p in team.pokemons.all %}
-                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ p.pokemon_id }}.png" class="w-8 h-8 object-contain" alt="{{ p.name }}">
-                  {% endfor %}
+            <label class="flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl transition-colors shadow-sm
+            {% if team.pokemons.count == 5 %}
+                cursor-pointer hover:border-blue-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50
+            {% else %}
+                opacity-40
+            {% endif %}">
+                <input type="radio" name="team1_id" value="{{ team.id }}" class="sr-only" 
+                    {% if team.pokemons.count == 5 %}
+                        {% if forloop.first %}checked{% endif %}
+                    {% endif %}>
+                <div class="flex-1">
+                    <div class="font-bold text-slate-800 flex items-center justify-between">
+                    <span>{{ team.name }}</span>
+                    <span class="text-xs px-2 py-1 rounded {% if team.pokemons.count == 5 %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                        {{ team.pokemons.count }}/5
+                    </span>
+                    </div>
+                    <div class="flex gap-1 mt-1">
+                    {% for p in team.pokemons.all %}
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ p.pokemon_id }}.png" class="w-8 h-8 object-contain" alt="{{ p.name }}">
+                    {% endfor %}
+                    </div>
                 </div>
-              </div>
             </label>
             {% empty %}
             <div class="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
@@ -218,19 +231,31 @@
           </h3>
           <div class="space-y-3 max-h-[400px] overflow-y-auto p-2">
             {% for team in teams %}
-            <label
-              class="flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl cursor-pointer hover:border-red-200 transition-colors has-[:checked]:border-red-500 has-[:checked]:bg-red-50 shadow-sm">
-              <input type="radio" name="team2_id" value="{{ team.id }}" class="sr-only" {% if forloop.counter == 2 %}checked{% endif %}>
-              <div class="flex-1">
-                <div class="font-bold text-slate-800">{{ team.name }}</div>
-                <div class="flex gap-1 mt-1">
-                  {% for p in team.pokemons.all %}
-                  <img
-                    src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ p.pokemon_id }}.png"
-                    class="w-8 h-8 object-contain" alt="{{ p.name }}">
-                  {% endfor %}
+            <label class="flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl transition-colors shadow-sm
+            {% if team.pokemons.count == 5 %}
+                cursor-pointer hover:border-red-200 has-[:checked]:border-red-500 has-[:checked]:bg-red-50
+            {% else %}
+                opacity-40
+            {% endif %}">
+                <input type="radio" name="team2_id" value="{{ team.id }}" class="sr-only" 
+                    {% if team.pokemons.count == 5 %}
+                        {% if forloop.counter == 2 %}checked{% endif %}
+                    {% endif %}>
+                <div class="flex-1"> 
+                    <div class="font-bold text-slate-800 flex items-center justify-between">
+                    <span>{{ team.name }}</span>
+                    <span class="text-xs px-2 py-1 rounded {% if team.pokemons.count == 5 %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                        {{ team.pokemons.count }}/5
+                    </span>
+                    </div>
+                    <div class="flex gap-1 mt-1">
+                    {% for p in team.pokemons.all %}
+                    <img
+                        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{{ p.pokemon_id }}.png"
+                        class="w-8 h-8 object-contain" alt="{{ p.name }}">
+                    {% endfor %}
+                    </div>
                 </div>
-              </div>
             </label>
             {% endfor %}
           </div>

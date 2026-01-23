@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -11,9 +12,6 @@ class PokemonCapture(models.Model):
     nickname = models.CharField(max_length=100, blank=True, null=True)
     level = models.IntegerField(default=1)  # Niveau du Pokémon (commence à 1)
     experience = models.IntegerField(default=0)
-
-    # Est-ce qu'il est dans l'équipe active (max 6) ?
-    in_team = models.BooleanField(default=False)
 
     captured_at = models.DateTimeField(auto_now_add=True)
 
@@ -43,9 +41,49 @@ class PokemonCapture(models.Model):
 
 
 class Team(models.Model):
+    POSITION_CHOICES = [
+        (0, "Équipe 1"),
+        (1, "Équipe 2"),
+        (2, "Équipe 3"),
+        (3, "Équipe 4"),
+        (4, "Équipe 5"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="teams")
     name = models.CharField(max_length=100)
     pokemons = models.ManyToManyField(PokemonCapture, related_name="teams")
 
+    # Avec position_choice on oblige à avoir entre 0 et 4
+    position = models.IntegerField(choices=POSITION_CHOICES, default=0)
+
     def __str__(self):
-        return f"{self.name} de {self.user.username}"
+        return f"{self.name} (Position {self.position + 1}) de {self.user.username}"
+
+    def add_pokemon(self, pokemon):
+        # check le nombre de pokemon
+        if self.pokemons.count() >= 5:
+            raise ValidationError("Une équipe ne peut pas avoir plus de 5 pokémons.")
+
+        self.pokemons.add(pokemon)
+
+    def rename_team(self, new_name):
+        self.name = new_name
+        self.full_clean()
+        self.save()
+
+    def is_ready_for_battle(self):
+        return self.pokemons.count() == 5
+
+    def clean(self):
+        super().clean()
+        # /!\ Pour un ManyToMany, cette validation est limitée car
+        # les Pokémon peuvent être ajoutés après la création de l'équipe.
+        if self.pk:  # Vérifier seulement si l'équipe existe déjà
+            if self.pokemons.count() > 5:
+                raise ValidationError(
+                    {"pokemons": "Une équipe ne peut pas avoir plus de 5 Pokémon."}
+                )
+
+    class Meta:
+        unique_together = ("user", "position")
+        ordering = ["position"]

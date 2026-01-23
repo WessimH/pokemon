@@ -24,6 +24,7 @@ COPY pyproject.toml poetry.lock ./
 
 # Install project dependencies
 RUN poetry install --no-root --only main
+# RUN poetry install --no-root --with dev
 
 # Copy project
 COPY . .
