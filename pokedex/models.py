@@ -48,19 +48,19 @@ class Team(models.Model):
         (3, "Équipe 4"),
         (4, "Équipe 5"),
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="teams")
     name = models.CharField(max_length=100)
     pokemons = models.ManyToManyField(PokemonCapture, related_name="teams")
-    
+
     # Avec position_choice on oblige à avoir entre 0 et 4
     position = models.IntegerField(choices=POSITION_CHOICES, default=0)
 
     def __str__(self):
         return f"{self.name} (Position {self.position + 1}) de {self.user.username}"
-    
+
     def add_pokemon(self, pokemon):
-        #check le nombre de pokemon
+        # check le nombre de pokemon
         if self.pokemons.count() >= 5:
             raise ValidationError("Une équipe ne peut pas avoir plus de 5 pokémons.")
 
@@ -73,10 +73,10 @@ class Team(models.Model):
 
     def is_ready_for_battle(self):
         return self.pokemons.count() == 5
-    
+
     def clean(self):
         super().clean()
-        # /!\ Pour un ManyToMany, cette validation est limitée car 
+        # /!\ Pour un ManyToMany, cette validation est limitée car
         # les Pokémon peuvent être ajoutés après la création de l'équipe.
         if self.pk:  # Vérifier seulement si l'équipe existe déjà
             if self.pokemons.count() > 5:
@@ -84,7 +84,6 @@ class Team(models.Model):
                     {"pokemons": "Une équipe ne peut pas avoir plus de 5 Pokémon."}
                 )
 
-    
     class Meta:
         unique_together = ("user", "position")
         ordering = ["position"]

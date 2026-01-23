@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('pokedex', '0004_alter_team_position'),
+        ("pokedex", "0004_alter_team_position"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='pokemoncapture',
-            name='in_team',
+            model_name="pokemoncapture",
+            name="in_team",
         ),
     ]

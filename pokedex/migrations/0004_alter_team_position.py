@@ -4,21 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('pokedex', '0003_alter_team_options_team_position_and_more'),
+        ("pokedex", "0003_alter_team_options_team_position_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='team',
-            name='position',
-            field=models.IntegerField(choices=[
-                (0, 'Équipe 1'), 
-                (1, 'Équipe 2'), 
-                (2, 'Équipe 3'), 
-                (3, 'Équipe 4'), 
-                (4, 'Équipe 5')
-            ], default=0),
+            model_name="team",
+            name="position",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Équipe 1"),
+                    (1, "Équipe 2"),
+                    (2, "Équipe 3"),
+                    (3, "Équipe 4"),
+                    (4, "Équipe 5"),
+                ],
+                default=0,
+            ),
         ),
     ]

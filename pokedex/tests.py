@@ -17,29 +17,24 @@ class TeamTests(TestCase):
             )
             self.pokemons.append(p)
 
-
     # Test insertion d'une équipe avec pokemons
     def test_insert_team(self):
-        team = Team.objects.create(
-            user=self.user,
-            name="Équipe 1",
-            position=0
-        )
+        team = Team.objects.create(user=self.user, name="Équipe 1", position=0)
 
         # Ajouter 3 pokémons à l'équipe
         team.pokemons.add(self.pokemons[0], self.pokemons[1], self.pokemons[2])
 
         # Vérifier que l'équipe existe bien en base
         team_db = Team.objects.get(user=self.user, position=0)
-        
+
         # vérifier les données
         self.assertEqual(team_db.name, "Équipe 1")
         self.assertEqual(team_db.position, 0)
         self.assertEqual(team_db.user, self.user)
         self.assertEqual(team_db.pokemons.count(), 3)
-        
+
         # Vérifier que les pokémons sont les bons
-        pokemon_ids = list(team_db.pokemons.values_list('id', flat=True))
+        pokemon_ids = list(team_db.pokemons.values_list("id", flat=True))
         self.assertIn(self.pokemons[0].id, pokemon_ids)
         self.assertIn(self.pokemons[1].id, pokemon_ids)
         self.assertIn(self.pokemons[2].id, pokemon_ids)
@@ -47,20 +42,12 @@ class TeamTests(TestCase):
     # Test pour verifier que on peut avoir qu'une équipe par position par joueur
     def test_team_position_unique(self):
         # Créer une équipe à position 0
-        Team.objects.create(
-            user=self.user,
-            name="Équipe 1",
-            position=0
-        )
-        
+        Team.objects.create(user=self.user, name="Équipe 1", position=0)
+
         try:
             # Créer une deuxieme équipe position 0
-            Team.objects.create(
-                user=self.user,
-                name="Équipe 1",
-                position=0
-            )
-            # Si ca passe echec 
+            Team.objects.create(user=self.user, name="Équipe 1", position=0)
+            # Si ca passe echec
             self.fail("La contrainte unique_together n'a pas empêché la création")
         except Exception:
             # Erreur attendu
@@ -68,57 +55,52 @@ class TeamTests(TestCase):
 
     # Test pour vérifier qu'on ne peut pas mettre +5 pokemons dans une équipe
     def test_max_five_pokemons_team(self):
-        team = Team.objects.create(
-            user=self.user,
-            name="Équipe Test",
-            position=0
-        )
+        team = Team.objects.create(user=self.user, name="Équipe Test", position=0)
         for i in range(5):
             team.add_pokemon(self.pokemons[i])
-        
+
         # Vérifier qu'on a bien 5 pokémons
         self.assertEqual(team.pokemons.count(), 5)
-        
-        # Essayer d'ajouter un 6ème pokémon, ça doit échouer        
+
+        # Essayer d'ajouter un 6ème pokémon, ça doit échouer
         with self.assertRaises(ValidationError) as context:
             team.add_pokemon(self.pokemons[5])
-        
+
         # Vérifier le message d'erreur
         self.assertIn("5 pokémons", str(context.exception))
-        
+
         # Vérifier qu'on a toujours 5 pokémons
         self.assertEqual(team.pokemons.count(), 5)
-    
+
     # Test 1 pokemon dans plusieurs équipes
     def test_cannot_add_same_pokemon_to_multiple_teams(self):
         # Créer 2 équipes
         team1 = Team.objects.create(user=self.user, name="Team 1", position=0)
         team2 = Team.objects.create(user=self.user, name="Team 2", position=1)
-        
+
         # Ajouter le même pokémon aux deux équipes
         pokemon = self.pokemons[0]
         team1.pokemons.add(pokemon)
         team2.pokemons.add(pokemon)
-        
+
         # Vérifier que le pokémon est bien dans les deux équipes
         self.assertIn(pokemon, team1.pokemons.all())
         self.assertIn(pokemon, team2.pokemons.all())
         self.assertEqual(pokemon.teams.count(), 2)
-    
+
     # Test de l'ordre de Meta
     def test_team_ordering(self):
         # Créer des équipes dans le désordre
         Team.objects.create(user=self.user, name="Team 2", position=2)
         Team.objects.create(user=self.user, name="Team 0", position=0)
         Team.objects.create(user=self.user, name="Team 1", position=1)
-        
+
         teams = list(Team.objects.filter(user=self.user))
-        
+
         # Vérifier qu'elles sont dans l'ordre croissant de position
         self.assertEqual(teams[0].position, 0)
         self.assertEqual(teams[1].position, 1)
         self.assertEqual(teams[2].position, 2)
-    
 
 
 class FightTests(TestCase):

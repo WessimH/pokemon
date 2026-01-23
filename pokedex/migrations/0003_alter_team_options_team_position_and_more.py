@@ -5,24 +5,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('pokedex', '0002_team'),
+        ("pokedex", "0002_team"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='team',
-            options={'ordering': ['position']},
+            name="team",
+            options={"ordering": ["position"]},
         ),
         migrations.AddField(
-            model_name='team',
-            name='position',
+            model_name="team",
+            name="position",
             field=models.IntegerField(default=0),
         ),
         migrations.AlterUniqueTogether(
-            name='team',
-            unique_together={('user', 'position')},
+            name="team",
+            unique_together={("user", "position")},
         ),
     ]
