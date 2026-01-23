@@ -7,4 +7,13 @@ services:
             - "8080:8000"
         environment:
             - DEBUG=1
-        command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+            - DJANGO_SUPERUSER_PASSWORD=root
+            - DJANGO_SUPERUSER_EMAIL=root@root.croot
+            - DJANGO_SUPERUSER_USERNAME=root
+        command: >
+            sh -c "
+            python manage.py migrate --noinput &&
+            python manage.py createsuperuser --noinput || true &&
+            python init_root_user.py &&
+            python manage.py runserver 0.0.0.0:8000
+            "
